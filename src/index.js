@@ -288,7 +288,7 @@ const queryHandlers = {
 
                 if (amount <= currentShares) {
                     self.handler.state = states.SELLMODE;
-                    self.emit(':ask', `Selling ${amount} ${symbol} will earn $${cost}. Continue?`, SELL_REPROMPT);
+                    self.emit(':ask', `Selling ${amount} ${symbol} will yield $${cost}. Continue?`, SELL_REPROMPT);
                 } else {
                     const message = stock.insufficientShares(amount, currentShares, symbol);
                     self.emit(':ask', message + SELL_REPROMPT, SELL_REPROMPT);
