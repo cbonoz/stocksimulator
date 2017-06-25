@@ -3,14 +3,14 @@ const library = (function () {
 
     const appName = 'Stock Simulator';
     const welcomeText = "Welcome to " + appName + ". I am a verbal simulator for stock trading.";
-    const helpText = "You can say 'portfolio', or perform an action like 'buy 100 AMAZON', 'sell 100 GOOGLE'.";
+    const helpText = "You can say 'my portfolio' for current balance information, or perform an action like 'buy 100 AMAZON', or 'sell 100 GOOGLE'.";
     const exitText = 'Closed ' + appName;
     const noResultsText = "Could not find any results for: ";
     const authErrorText = "There was an authentication issue while retrieving your information, please reinstall " +
         "or re-authenticate the alexa app";
     const askAgainText = "Ask me something else?";
     const serverErrorText = "Could not retrieve information from server. " + askAgainText;
-    const startingBalance = 20000;
+    const startingBalance = 25000;
 
     function getClosestSymbolUrl(stockName)  {
         return `http://d.yimg.com/aq/autoc?query=${stockName}&region=US&lang=en-US`;

@@ -25,9 +25,12 @@ Alexa will respond to all of these requests with responses like these:
 
 ### Dev Notes
 
-Installing App Dependencies.
+Installing App Dependencies:
 ```
 cd src/ 
 npm install
 ```
-
+Prepare for aws submission (run zip command from /src): 
+```
+ zip -r -X ../src.zip *
+```

@@ -11,7 +11,7 @@ const stock = require('./stock');
 
 //Replace with your app ID (OPTIONAL).  You can find this value at the top of your skill's page on http://developer.amazon.com.  
 //Make sure to enclose your value in quotes, like this: const APP_ID = "amzn1.ask.skill.bb4045e6-b3e8-4133-b650-72923c5980f1";
-const APP_ID = undefined;
+const APP_ID = 'amzn1.ask.skill.f56869d8-4f28-4773-8185-e5177218108e';
 
 const SKILL_NAME = stock.APP_NAME;
 const HELP_MESSAGE = stock.HELP_TEXT;
@@ -20,8 +20,8 @@ const WELCOME_MESSAGE = stock.WELCOME_TEXT;
 const CONFIRM_MESSAGE = 'Are you sure? Say yes or no.';
 const NO_SHARES_MESSAGE = "I didn't find any shares to sell.";
 
-const BUY_REPROMPT = 'Say a number of shares to buy followed by the stock, or say cancel.';
-const SELL_REPROMPT = 'Say a number of shares to sell followed by the stock, or say cancel.';
+const BUY_REPROMPT = "Say a number of shares to buy followed by the stock, such as 'buy 100 amazon', or say cancel.";
+const SELL_REPROMPT = "Say a number of shares to sell followed by the stock, like 'sell 200 google', or say cancel.";
 
 
 const imageObj = {
@@ -99,7 +99,7 @@ const restartHandlers = Alexa.CreateStateHandler(states.RESTARTMODE, {
     },
     'AMAZON.YesIntent': function () {
         this.attributes['balance'] = stock.STARTING_BALANCE;
-        this.attributes['stocks'] = {};
+        this.attributes['stocks'] = '{}';
         this.emit(':ask', `Account reset to ${stock.STARTING_BALANCE}. What now?`, HELP_MESSAGE);
     },
 });
@@ -151,6 +151,7 @@ const queryHandlers = {
     'PortfolioIntent': function () {
         const stockMap = JSON.parse(this.attributes['stocks']);
         const balance = this.attributes['balance'];
+        console.log('stockMap: ' + JSON.stringify(stockMap));
 
         const self = this;
         // This replaces the deprecated snapshot() API
