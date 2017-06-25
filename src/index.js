@@ -177,27 +177,6 @@ const queryHandlers = {
         });
 
     },
-    'StockIntent': function () {
-        const self = this;
-        // This replaces the deprecated snapshot() API
-        yahoo.quote({
-            symbol: [symbols],
-            modules: ['price', 'summaryDetail'] // see the docs for the full list
-        }, function (err, quotes) {
-            if (err) {
-                self.emit(':tellWithCard', err, SKILL_NAME, imageObj)
-            }
-            console.log(quotes);
-            self.emit(':tellWithCard', 'got quotes', SKILL_NAME, imageObj)
-        });
-
-    },
-    'StatsIntent': function () {
-        this.emit(':tellWithCard', speechOutput, SKILL_NAME, imageObj)
-    },
-    'NumberIntent': function () {
-        this.emit(':ask', `What do you want to buy? ${BUY_REPROMPT}`, BUY_REPROMPT);
-    },
     'BuyIntent': function () {
         const self = this;
         const amount = parseInt(this.event.request.intent.slots.Amount.value);

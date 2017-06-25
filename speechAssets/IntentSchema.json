@@ -1,6 +1,60 @@
-{ "intents": [
-    { "intent": "GetNewFactIntent" },
-    { "intent": "AMAZON.HelpIntent" },
-    { "intent": "AMAZON.StopIntent" },
-    { "intent": "AMAZON.CancelIntent" }
-]}
+{
+  "intents": [
+    {
+      "intent": "LaunchIntent"
+    },
+    {
+      "intent": "NewPortfolioIntent"
+    },
+    {
+      "intent": "QuoteIntent",
+      "slots": [
+        {
+          "name": "Stock",
+          "type": "STOCK"
+        }
+      ]
+    },
+    {
+      "intent": "BuyIntent",
+      "slots": [
+        {
+          "name": "Stock",
+          "type": "STOCK"
+        },
+        {
+          "name": "Amount",
+          "type": "AMAZON.NUMBER"
+        }
+      ]
+    },
+    {
+      "intent": "SellIntent",
+      "slots": [
+        {
+          "name": "Stock",
+          "type": "STOCK"
+        },
+        {
+          "name": "Amount",
+          "type": "AMAZON.NUMBER"
+        }
+      ]
+    },
+    {
+      "intent": "PortfolioIntent"
+    },
+    {
+      "intent": "RestartIntent"
+    },
+    {
+      "intent": "AMAZON.HelpIntent"
+    },
+    {
+      "intent": "AMAZON.StopIntent"
+    },
+    {
+      "intent": "AMAZON.CancelIntent"
+    }
+  ]
+}
