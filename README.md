@@ -3,7 +3,7 @@
 
 ## What does this app do? 
 * Users can set up their own virtual stock portfolios by making verbal market and sell orders.
-* Each user starts with 25k to purchase any stock they want.
+* Each user starts with 25k to purchase public stocks at last market values. 
 * Stock prices are retrieved in real-time using yahoo finance api's.
 * If you go poor or bankrupt, no worries. You can always start over by saying 'restart'.
 * Natural Language processing search allows translation from company names to stock tickers behind the scenes.
