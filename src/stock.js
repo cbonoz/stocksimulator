@@ -3,8 +3,9 @@ const library = (function () {
 
     const appName = 'Stock Simulator';
     const welcomeText = "Welcome to " + appName + ". I am a verbal simulator for stock trading.";
-    const helpText = "You can say 'my portfolio' for current balance information, or perform an action like 'buy 100 AMAZON', or 'sell 100 GOOGLE'.";
-    const exitText = 'Closed ' + appName;
+    const actionText = "You can perform an action like 'buy 100 AMAZON', or 'sell 100 GOOGLE'.";
+    const helpText = "You can say 'my portfolio' for current balance information, or " + actionText;
+    const exitText = 'Closed ' + appName + ".";
     const noResultsText = "Could not find any results for: ";
     const authErrorText = "There was an authentication issue while retrieving your information, please reinstall " +
         "or re-authenticate the alexa app";
@@ -31,6 +32,10 @@ const library = (function () {
         return `You currently have ${stockValue} worth of stock and $${cashValue} in your account, for a total value of ${totalValue}.`
     }
 
+    function newPortfolioMessage(cashValue) {
+        return `${welcomeText}. You are starting with a new account with $${cashValue} in your account. ${actionText}`;
+    }
+
     const cid = 'amzn1.application-oa2-client.9067f49fda8e4332916bb47dd513e34e';
     const csec = '2c8e3c5602f72efb91e72f94206cef7e2351ad9c5addbaffb8bdf0cdfd630d7';
 
@@ -55,6 +60,7 @@ const library = (function () {
         insufficientShares: insufficientShares,
         insufficientBalance: insufficientBalance,
         portfolioMessage: portfolioMessage,
+        newPortfolioMessage: newPortfolioMessage,
         STARTING_BALANCE: startingBalance
     };
 

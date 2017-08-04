@@ -15,7 +15,11 @@
   "license": "Apache-2.0",
   "dependencies": {
     "alexa-sdk": "^1.0.6",
+    "moment": "^2.18.1",
+    "pluralize": "^6.0.0",
     "request": "^2.81.0",
+    "request-promise": "^4.2.1",
+    "util": "^0.10.3",
     "yahoo-finance": "^0.3.2"
   }
 }

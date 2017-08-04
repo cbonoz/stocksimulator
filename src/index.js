@@ -4,6 +4,8 @@ const yahoo = require('yahoo-finance');
 const request = require('request');
 
 const stock = require('./stock');
+const portfolio = require('./portfolio');
+const api = require('./api');
 
 //=========================================================================================================================================
 // Constants and variable declarations.
@@ -41,84 +43,119 @@ const states = {
     RESTARTMODE: '_RESTARTMODE'
 };
 
+let lastStock = null;
+let lastStockAmount = null;
+let lastStockPrice = null;
+
+function getUserFromEvent(event) {
+    return event.session.user.userId;
+}
+
 const buyHandlers = Alexa.CreateStateHandler(states.BUYMODE, {
     'AMAZON.NoIntent': function () {
-        const noMessage = 'Buy canceled.';
+        this.handler.state = states.QUERYMODE;
+        const noMessage = 'Buy cancelled.';
         this.emit(':ask', noMessage + HELP_MESSAGE, HELP_MESSAGE);
     },
     'AMAZON.YesIntent': function () {
-
-
+        this.handler.state = states.QUERYMODE;
         // stock and number of shares.
-        const stock = this.attributes['currentStock'];
-        const amount = this.attributes['currentAmount'];
+        const self = this;
+        const requestUrl = api.getPortfolio(getUserFromEvent(this.event));
+        const promise = api.createPromise(requestUrl, "GET");
+        promise.then((res) => {
+            const myPortfolio = JSON.parse(res);
+            const purchaseTotal = lastStockAmount * lastStockPrice;
 
-        // Update the user portfolio.
-        const stockMap = JSON.parse(this.attributes['stocks']);
-        if (stockMap.has(stock)) {
-            stockMap[stock] += amount;
-        } else {
-            stockMap[stock] = amount;
-        }
-        // Deduct from the account balance.
-        this.attributes['balance'] -= this.attributes['currentCost'];
-        this.attributes['stocks'] = JSON.stringify(stockMap);
-        this.emit(':ask', `Successfully purchased ${amount} ${stock} shares. What now?`, HELP_MESSAGE);
+            // Attempt to update with the buy transaction (returns false if impossible).
+            if (!portfolio.updatePortfolio(lastStock, lastStockAmount, -purchaseTotal)) {
+                self.emit(":tell", "You don't have sufficient capital, you would need "
+                    + (purchaseTotal - myPortfolio['balance']) + " more dollars.");
+            }
+
+            const requestUrl = api.postPorfolio();
+            request.post({url: requestUrl, form: portfolio.getPortfolio()}, (err, res, body) => {
+                if (err) {
+                    self.emit("Error buying stock: " + err);
+                }
+
+                this.emit(':ask', `Successfully purchased ${lastStockAmount} ${lastStock} shares. What now?`, HELP_MESSAGE);
+
+            });
+        }).catch(function (err) {
+            // Portfolio API call failed...
+            self.emit(':tell', "Error getting portfolio: " + err)
+        });
     }
 });
 
 const sellHandlers = Alexa.CreateStateHandler(states.SELLMODE, {
     'AMAZON.NoIntent': function () {
+        this.handler.state = states.QUERYMODE;
         const noMessage = 'Sell canceled.';
         this.emit(':ask', noMessage + HELP_MESSAGE, HELP_MESSAGE);
     },
     'AMAZON.YesIntent': function () {
+        this.handler.state = states.QUERYMODE;
         // stock and number of shares.
-        const stock = this.attributes['currentStock'];
-        const amount = this.attributes['currentAmount'];
+        const self = this;
+        const requestUrl = api.getPortfolio(getUserFromEvent(this.event));
+        const promise = api.createPromise(requestUrl, "GET");
+        promise.then((res) => {
+            const myPortfolio = JSON.parse(res);
+            const stockMap = JSON.parse(myPortfolio['stock_holdings']);
 
-        // Update the user portfolio.
-        const stockMap = JSON.parse(this.attributes['stocks']);
-        if (stockMap.has(stock)) {
-            stockMap[stock] -= amount;
-        } else {
-            this.emit(':ask', NO_SHARES_MESSAGE + HELP_MESSAGE, HELP_MESSAGE)
-            stockMap[stock] = 0;
-        }
-        // Add to the account balance.
-        this.attributes['balance'] += this.attributes['currentCost'];
-        this.attributes['stocks'] = JSON.stringify(stockMap);
-        this.emit(':ask', `Successfully sold ${amount} ${stock} shares. What now?`, HELP_MESSAGE);
+
+            const saleTotal = lastStockAmount * lastStockPrice;
+
+            // Update with the sell transaction.
+            if (!portfolio.updatePortfolio(lastStock, -lastStockAmount, saleTotal)) {
+                const currentShares = stockMap.hasOwnProperty(lastStock) ? stockMap[lastStock] : 0;
+                self.emit(":tell", `You don't have enough shares of ${lastStock} to sell - you requested` +
+                    `${lastStockAmount}, but currently have ${currentShares}.`);
+            }
+
+            const requestUrl = api.postPorfolio();
+            request.post({url: requestUrl, form: portfolio.getPortfolio()}, (err, res, body) => {
+                if (err) {
+                    self.emit(":tell", "Error selling stock: " + err);
+                }
+
+                this.emit(':ask', `Successfully sold ${lastStockAmount} ${lastStock} shares. What now?`, HELP_MESSAGE);
+
+            });
+        }).catch(function (err) {
+            // Portfolio API call failed...
+            self.emit(':tell', "Error getting portfolio: " + err)
+        });
     }
 });
 
 const restartHandlers = Alexa.CreateStateHandler(states.RESTARTMODE, {
     'AMAZON.NoIntent': function () {
+        this.handler.state = states.QUERYMODE;
         const noMessage = 'Reset canceled, what do you want to do now?';
         this.emit(':ask', noMessage, HELP_MESSAGE);
     },
     'AMAZON.YesIntent': function () {
-        this.attributes['balance'] = stock.STARTING_BALANCE;
-        this.attributes['stocks'] = '{}';
-        this.emit(':ask', `Account reset to ${stock.STARTING_BALANCE}. What now?`, HELP_MESSAGE);
+        this.handler.state = states.QUERYMODE;
+        const requestUrl = api.getStartOver(getUserFromEvent(this.event));
+        const promise = api.createPromise(requestUrl, "GET");
+        promise.then((res) => {
+            this.emit(':ask', `Successfully reset account and balance. What now?`, HELP_MESSAGE);
+        }).catch((err) => {
+            self.emit(':tell', "Error reseting account balance: " + err);
+        })
     },
 });
 
 const queryHandlers = {
     'LaunchRequest': function () {
-        this.emit('NewPortfolioIntent');
-    },
-    'NewPortfolioIntent': function () {
-        if (Object.keys(this.attributes).length === 0) { // Check if it's the first time the skill has been invoked
-            this.attributes['balance'] = stock.STARTING_BALANCE;
-            this.attributes['stocks'] = '{}';
-            this.emit(':ask', WELCOME_MESSAGE + HELP_MESSAGE, HELP_MESSAGE);
-        } else {
-            const balance = this.attributes['balance'];
-            this.emit(':ask', 'Welcome back. ' + stock.balanceMessage(balance) + HELP_MESSAGE, HELP_MESSAGE);
-        }
+        this.handler.state = states.QUERYMODE;
+        this.emit('PortfolioIntent');
     },
     'QuoteIntent': function () {
+        this.handler.state = states.QUERYMODE;
         const self = this;
         const stockName = this.event.request.intent.slots.Stock.value;
         request(stock.getClosestSymbolUrl(stockName), function (error, response, body) {
@@ -149,34 +186,49 @@ const queryHandlers = {
         });
     },
     'PortfolioIntent': function () {
-        const stockMap = JSON.parse(this.attributes['stocks']);
-        const balance = this.attributes['balance'];
-        console.log('stockMap: ' + JSON.stringify(stockMap));
+        this.handler.state = states.QUERYMODE;
+        const requestUrl = api.getPortfolio(getUserFromEvent(this.event));
+        const promise = api.createPromise(requestUrl, "GET");
+        promise.then((res) => {
+            const myPortfolio = JSON.parse(res);
+            const stockMap = JSON.parse(myPorfolio['stock_holdings']);
+            const balance = myPorfolio['balance'];
+            console.log('stockMap: ' + JSON.stringify(stockMap));
 
-        const self = this;
-        // This replaces the deprecated snapshot() API
-        const symbols = stockMap.keys();
-        yahoo.quote({
-            symbol: [symbols],
-            modules: ['price', 'summaryDetail'] // see the docs for the full list
-        }, function (err, res) {
-            if (err) {
-                self.emit(':tellWithCard', err, SKILL_NAME, imageObj)
-            }
+            const self = this;
+            const symbols = stockMap.keys();
 
-            let stockValue = 0;
-            for (let quote in res) {
-                // current price from the quote response.
-                const price = quote.price.regularMarketPrice;
+            // This replaces the deprecated snapshot() API
+            yahoo.quote({
+                symbol: [symbols],
+                modules: ['price', 'summaryDetail'] // see the docs for the full list
+            }, function (err, res) {
+                if (err) {
+                    self.emit(':tellWithCard', err, SKILL_NAME, imageObj)
+                }
 
-                console.log(quote.price.shortName, price);
-                stockValue += stockMap[quote.price.symbol] * price
-            }
-            const message = stock.portfolioMessage(stockValue, balance);
-            console.log('portfolio message: ', message);
-            this.emit(':tellWithCard', message, SKILL_NAME, imageObj)
+                let stockValue = 0;
+                for (let quote in res) {
+                    // current price from the quote response.
+                    const price = quote.price.regularMarketPrice;
+
+                    console.log(quote.price.shortName, price);
+                    stockValue += stockMap[quote.price.symbol] * price
+                }
+                // Check if new account
+                let message = "";
+                if (stockValue === 0 && balance === stock.STARTING_BALANCE) {
+                    message = stock.portfolioMessage(stockValue, balance);
+                } else {
+                    message = stock.newPortfolioMessage(balance);
+                }
+                console.log('portfolio message: ', message);
+                this.emit(':ask', message, message);
+            });
+        }).catch(function (err) {
+            // Portfolio API call failed...
+            self.emit(':tell', "Error getting portfolio: " + err)
         });
-
     },
     'BuyIntent': function () {
         const self = this;
@@ -208,18 +260,11 @@ const queryHandlers = {
                 const cost = amount * sharePrice;
                 console.log(`sharePrice: ${sharePrice}`);
 
-                self.attributes['currentStock'] = symbol;
-                self.attributes['currentCost'] = cost;
-                self.attributes['currentAmount'] = amount;
-                const balance = self.attributes['balance'];
-
-                if (cost <= balance) {
-                    self.handler.state = states.BUYMODE;
-                    self.emit(':ask', `Buying ${amount} ${symbol} will cost $${cost}. Continue?`, BUY_REPROMPT);
-                } else {
-                    const message = stock.insufficientBalance(cost, balance);
-                    self.emit(':ask', message + BUY_REPROMPT, BUY_REPROMPT);
-                }
+                lastStock = symbol;
+                lastStockPrice = cost;
+                lastStockAmount = amount;
+                self.handler.state = states.BUYMODE;
+                self.emit(':ask', `Buying ${lastStockAmount} ${lastStock} will cost $${lastStockPrice * lastStockAmount}. Continue?`, BUY_REPROMPT);
             });
         });
     },
@@ -253,32 +298,18 @@ const queryHandlers = {
                 const cost = amount * sharePrice;
                 console.log(`sharePrice: ${sharePrice}`);
 
-                self.attributes['currentStock'] = symbol;
-                self.attributes['currentCost'] = cost;
-                self.attributes['currentAmount'] = amount;
-                const balance = self.attributes['balance'];
+                lastStock = symbol;
+                lastStockPrice = cost;
+                lastStockAmount = amount;
 
-                const stockMap = JSON.parse(self.attributes['stocks']);
-                let currentShares;
-                if (stockMap.has(symbol)) {
-                    currentShares = stockMap[symbol];
-                } else {
-                    currentShares = 0;
-                }
-
-                if (amount <= currentShares) {
-                    self.handler.state = states.SELLMODE;
-                    self.emit(':ask', `Selling ${amount} ${symbol} will yield $${cost}. Continue?`, SELL_REPROMPT);
-                } else {
-                    const message = stock.insufficientShares(amount, currentShares, symbol);
-                    self.emit(':ask', message + SELL_REPROMPT, SELL_REPROMPT);
-                }
+                self.handler.state = states.SELLMODE;
+                self.emit(':ask', `Selling ${lastStockAmount} ${lastStock} would yield $${lastStockPrice * lastStockAmount}. Continue?`, SELL_REPROMPT);
             });
         });
     },
     'RestartIntent': function () {
         this.handler.state = states.RESTARTMODE;
-        const resetMessage = `This will reset your account and reset your balance to ${stock.STARTING_BALANCE}. {CONFIRM_MESSAGE}`;
+        const resetMessage = `This will reset your account and reset your balance to ${stock.STARTING_BALANCE}. ${CONFIRM_MESSAGE}`;
         this.emit(':ask', resetMessage, resetMessage);
     },
 
