@@ -3,6 +3,7 @@ const Alexa = require('alexa-sdk');
 const yahoo = require('yahoo-finance');
 const request = require('request');
 
+// local libraries.
 const stock = require('./stock');
 const portfolio = require('./portfolio');
 const api = require('./api');
@@ -18,9 +19,7 @@ const APP_ID = 'amzn1.ask.skill.f56869d8-4f28-4773-8185-e5177218108e';
 const SKILL_NAME = stock.APP_NAME;
 const HELP_MESSAGE = stock.HELP_TEXT;
 const STOP_MESSAGE = stock.EXIT_TEXT;
-const WELCOME_MESSAGE = stock.WELCOME_TEXT;
 const CONFIRM_MESSAGE = 'Are you sure? Say yes or no.';
-const NO_SHARES_MESSAGE = "I didn't find any shares to sell.";
 
 const BUY_REPROMPT = "Say a number of shares to buy followed by the stock, such as 'buy 100 amazon', or say cancel.";
 const SELL_REPROMPT = "Say a number of shares to sell followed by the stock, like 'sell 200 google', or say cancel.";

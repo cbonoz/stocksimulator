@@ -3,9 +3,9 @@
  */
 'use strict';
 const library = (function () {
-
     const rp = require('request-promise');
 
+    // point to server url.
     const baseUrl = "http://172.31.26.60:9003/api";
 
     function getPortfolio(userId) {
@@ -17,7 +17,7 @@ const library = (function () {
     }
 
     function getStartOver(userId) {
-        return `${baseUrl}/startover/${userId}`;
+        return `${baseUrl}/restart/${userId}`;
     }
 
     /*
