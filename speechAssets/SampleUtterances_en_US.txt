@@ -3,9 +3,12 @@ QuoteIntent price {Stock}
 QuoteIntent {Stock} price
 QuoteIntent {Stock} quote
 QuoteIntent the current {Stock} price
+QuoteIntent the current {Stock} share price
 
-BuyIntent buy {Amount} {Stock}
-SellIntent sell {Amount} {Stock}
+BuyIntent buy {Amount} of {Stock}
+SellIntent sell {Amount} of {Stock}
+BuyIntent buy {Amount} shares of {Stock}
+SellIntent sell {Amount} shares of {Stock}
 
 PortfolioIntent my account balance
 PortfolioIntent my account information
@@ -15,6 +18,6 @@ PortfolioIntent my portfolio value
 PortfolioIntent my stocks
 
 RestartIntent start over
-RestartIntent new game
+RestartIntent new portfolio
+RestartIntent new account
 RestartIntent restart
-

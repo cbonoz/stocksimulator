@@ -11,17 +11,24 @@
 
 ## Ok, so how do I interact with Stock Simulator? 
 
-*  "Alexa, ask Stock Simulator for my portfolio"
-*  "Alexa, ask Stock Simulator to buy 100 amazon."
-*  "Alexa, ask Stock Simulator to sell 200 tesla."
-*  "Alexa, ask Stock Simulator for amazon quote"
+Each user starts with $100,000 to purchase public and trade stocks in a virtual portfolio.
+Stock prices are retrieved in real-time using yahoo finance API's.
+If you go poor or bankrupt, no worries. You can always start over by saying 'restart' or 'start over'.
+Language processing will automatically translate from your stated company name to the individual stock tickers behind the scenes.
+
+Ok, so how do I interact with Stock Simulator?
+
+* "Alexa, ask Stock Simulator for my portfolio"
+* "Alexa, ask Stock Simulator to buy 100 shares of amazon."
+* "Alexa, ask Stock Simulator to sell 200 shares of tesla."
+* "Alexa, ask Stock Simulator for the current amazon share price"
 
 Alexa will respond to all of these requests with responses like these:
 
-*  "You currently have 100 amazon shares, 200 tesla shares, and $2500 in your account, for a total current market value of $X.
-*  "Buying 100 amazon will cost $100,000. Continue?" <i>(or 'not enough balance remaining' message)</i>
-*  "Selling 200 tesla will yield $60,000. Continue?"
-*  "The last regular market price of amazon was $1000."
+* "You currently have 100 amazon, 200 tesla in your account with $25000 in your account, for a net value of $200,000.
+* "Buying 100 amazon will cost $100,000. Continue?" (or 'not enough balance remaining' message)
+* "Selling 200 tesla will yield $60,000. Continue?"
+* "The last regular market price of amazon was $1000."
 
 ### Dev Notes
 

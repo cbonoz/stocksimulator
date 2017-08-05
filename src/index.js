@@ -15,20 +15,20 @@ const api = require('./api');
 
 //Replace with your app ID (OPTIONAL).  You can find this value at the top of your skill's page on http://developer.amazon.com.  
 //Make sure to enclose your value in quotes, like this: const APP_ID = "amzn1.ask.skill.bb4045e6-b3e8-4133-b650-72923c5980f1";
-const APP_ID = 'amzn1.ask.skill.f56869d8-4f28-4773-8185-e5177218108e';
-
+// const APP_ID = 'amzn1.ask.skill.f56869d8-4f28-4773-8185-e5177218108e';
+const APP_ID = 'amzn1.ask.skill.562665fb-3f00-4feb-befc-53177256f19f';
 const SKILL_NAME = stock.APP_NAME;
 const HELP_MESSAGE = stock.HELP_TEXT;
 const STOP_MESSAGE = stock.EXIT_TEXT;
 const CONFIRM_MESSAGE = 'Are you sure? Say yes or no.';
 
-const BUY_REPROMPT = "Say a number of shares to buy followed by the stock, such as 'buy 100 amazon', or say cancel.";
-const SELL_REPROMPT = "Say a number of shares to sell followed by the stock, like 'sell 200 google', or say cancel.";
+const BUY_REPROMPT = "Say a number of shares to buy followed by the stock, such as 'buy 100 shares of amazon', or say cancel.";
+const SELL_REPROMPT = "Say a number of shares to sell followed by the stock, like 'sell 200 shares of google', or say cancel.";
 
 
 const imageObj = {
-    smallImageUrl: './img/stock_sim.png',
-    largeImageUrl: './img/stock_sim.png',
+    smallImageUrl: './img/stock_sim_108.png',
+    largeImageUrl: './img/stock_sim_512.png',
 };
 
 //=========================================================================================================================================
@@ -36,24 +36,23 @@ const imageObj = {
 //=========================================================================================================================================
 
 const states = {
-    QUERYMODE: '_QUERYMODE', // User is deciding which query to run
     BUYMODE: '_BUYMODE',
     SELLMODE: '_SELLMODE',
     RESTARTMODE: '_RESTARTMODE'
 };
 
-let lastStock = null;
+let lastStockSymbol = null;
 let lastStockAmount = null;
 let lastStockPrice = null;
 
 const buyHandlers = Alexa.CreateStateHandler(states.BUYMODE, {
     'AMAZON.NoIntent': function () {
-        this.handler.state = states.QUERYMODE;
+        this.handler.state = '';
         const noMessage = 'Buy cancelled.';
         this.emit(':ask', noMessage + HELP_MESSAGE, HELP_MESSAGE);
     },
     'AMAZON.YesIntent': function () {
-        this.handler.state = states.QUERYMODE;
+        this.handler.state = '';
         // stock and number of shares.
         const self = this;
         const requestUrl = api.getPortfolio(portfolio.getUserFromEvent(this.event));
@@ -64,7 +63,7 @@ const buyHandlers = Alexa.CreateStateHandler(states.BUYMODE, {
             const purchaseTotal = lastStockAmount * lastStockPrice;
 
             // Attempt to update with the buy transaction (returns false if impossible).
-            if (!portfolio.updateHolding(lastStock, lastStockAmount, -purchaseTotal)) {
+            if (!portfolio.updateHolding(lastStockSymbol, lastStockAmount, -purchaseTotal)) {
                 self.emit(":tell", `You need $${purchaseTotal - myPortfolio['Balance']} to complete this purchase`);
             }
 
@@ -74,7 +73,7 @@ const buyHandlers = Alexa.CreateStateHandler(states.BUYMODE, {
                     self.emit("Error buying stock: " + err);
                 }
 
-                self.emit(':ask', `Successfully purchased ${lastStockAmount} ${lastStock} shares. What now?`, HELP_MESSAGE);
+                self.emit(':ask', `Successfully purchased ${lastStockAmount} ${lastStockSymbol} shares. What now?`, HELP_MESSAGE);
 
             });
         }).catch(function (err) {
@@ -82,16 +81,22 @@ const buyHandlers = Alexa.CreateStateHandler(states.BUYMODE, {
             self.emit(':tell', "Error getting portfolio: " + err)
         });
     }
+    ,
+    'Unhandled': function() {
+        console.log("UNHANDLED");
+        const message = "Sorry I didn't get that. Say yes to buy or no to cancel";
+        this.emit(':tell', message, message);
+    }
 });
 
 const sellHandlers = Alexa.CreateStateHandler(states.SELLMODE, {
     'AMAZON.NoIntent': function () {
-        this.handler.state = states.QUERYMODE;
-        const noMessage = 'Sell canceled.';
+        this.handler.state = '';
+        const noMessage = 'Sell cancelled.';
         this.emit(':ask', noMessage + HELP_MESSAGE, HELP_MESSAGE);
     },
     'AMAZON.YesIntent': function () {
-        this.handler.state = states.QUERYMODE;
+        this.handler.state = '';
         // stock and number of shares.
         const self = this;
         const requestUrl = api.getPortfolio(portfolio.getUserFromEvent(this.event));
@@ -103,9 +108,9 @@ const sellHandlers = Alexa.CreateStateHandler(states.SELLMODE, {
             const saleTotal = lastStockAmount * lastStockPrice;
 
             // Update with the sell transaction.
-            if (!portfolio.updateHolding(lastStock, -lastStockAmount, saleTotal)) {
-                const currentShares = stockMap.hasOwnProperty(lastStock) ? stockMap[lastStock] : 0;
-                self.emit(":tell", `You don't have enough shares of ${lastStock} to sell - you asked to sell ` +
+            if (!portfolio.updateHolding(lastStockSymbol, -lastStockAmount, saleTotal)) {
+                const currentShares = stockMap.hasOwnProperty(lastStockSymbol) ? stockMap[lastStockSymbol] : 0;
+                self.emit(":tell", `You don't have enough shares of ${lastStockSymbol} to sell - you asked to sell ` +
                     `${lastStockAmount}, but currently have ${currentShares}.`);
             }
 
@@ -115,7 +120,7 @@ const sellHandlers = Alexa.CreateStateHandler(states.SELLMODE, {
                     self.emit(":tell", "Error selling stock: " + err);
                 }
 
-                this.emit(':ask', `Successfully sold ${lastStockAmount} ${lastStock} shares. What now?`, HELP_MESSAGE);
+                self.emit(':ask', `Successfully sold ${lastStockAmount} ${lastStockSymbol} shares. What now?`, HELP_MESSAGE);
 
             });
         }).catch(function (err) {
@@ -123,16 +128,22 @@ const sellHandlers = Alexa.CreateStateHandler(states.SELLMODE, {
             self.emit(':tell', "Error getting portfolio: " + err)
         });
     }
+    ,
+    'Unhandled': function() {
+        console.log("UNHANDLED");
+        const message = "Sorry I didn't get that. Say yes to sell or no to cancel";
+        this.emit(':tell', message, message);
+    }
 });
 
 const restartHandlers = Alexa.CreateStateHandler(states.RESTARTMODE, {
     'AMAZON.NoIntent': function () {
-        this.handler.state = states.QUERYMODE;
+        this.handler.state = '';
         const noMessage = 'Reset canceled, what do you want to do now?';
         this.emit(':ask', noMessage, HELP_MESSAGE);
     },
     'AMAZON.YesIntent': function () {
-        this.handler.state = states.QUERYMODE;
+        this.handler.state = '';
         const requestUrl = api.getStartOver(portfolio.getUserFromEvent(this.event));
         const promise = api.createPromise(requestUrl, "GET");
         promise.then((res) => {
@@ -141,15 +152,20 @@ const restartHandlers = Alexa.CreateStateHandler(states.RESTARTMODE, {
             self.emit(':tell', "Error reseting account balance: " + err);
         })
     },
+    'Unhandled': function() {
+        console.log("UNHANDLED");
+        const message = "Sorry I didn't get that. Say yes to restart your account or no to cancel";
+        this.emit(':tell', message, message);
+    }
 });
 
 const queryHandlers = {
     'LaunchRequest': function () {
-        this.handler.state = states.QUERYMODE;
+        this.handler.state = '';
         this.emit('PortfolioIntent');
     },
     'QuoteIntent': function () {
-        this.handler.state = states.QUERYMODE;
+        this.handler.state = '';
         const self = this;
         const stockName = this.event.request.intent.slots.Stock.value;
         request(stock.getClosestSymbolUrl(stockName), function (error, response, body) {
@@ -181,7 +197,7 @@ const queryHandlers = {
     },
     'PortfolioIntent': function () {
         const self = this;
-        this.handler.state = states.QUERYMODE;
+        this.handler.state = '';
         const requestUrl = api.getPortfolio(portfolio.getUserFromEvent(this.event));
         const promise = api.createPromise(requestUrl, "GET");
         promise.then((res) => {
@@ -215,12 +231,12 @@ const queryHandlers = {
                     stockValue += stockMap[symbols[i]] * price
                 }
 
-                // Check if new account
                 let message = "";
+                // Check if new account
                 if (stockValue === 0 && balance === stock.STARTING_BALANCE) {
                     message = stock.newPortfolioMessage(balance);
                 } else {
-                    message = stock.portfolioMessage(stockValue, balance);
+                    message = stock.portfolioMessage(stockMap, stockValue, balance);
                 }
                 console.log('portfolio message: ', message);
                 self.emit(':ask', message, message);
@@ -230,6 +246,9 @@ const queryHandlers = {
             self.emit(':tell', "Error getting portfolio: " + err)
         });
     },
+
+    // Two phase intents below:
+
     'BuyIntent': function () {
         const self = this;
         const amount = parseInt(this.event.request.intent.slots.Amount.value);
@@ -245,8 +264,10 @@ const queryHandlers = {
                 self.emit(':tellWithCard', errorMessage, SKILL_NAME, imageObj)
             }
 
-            const symbol = results[0].symbol;
-            console.log('parsed symbol:', symbol);
+            const mostLikelyStock = results[0];
+            const symbol = mostLikelyStock.symbol;
+            const stockName = mostLikelyStock.name;
+            console.log(`parsed most likely stockName/symbol: ${stockName}/${symbol}`);
 
             yahoo.quote({
                 symbol: [symbol],
@@ -256,12 +277,13 @@ const queryHandlers = {
                     self.emit(':tellWithCard', err, SKILL_NAME, imageObj)
                 }
 
-                lastStock = symbol;
+                lastStockSymbol = symbol;
                 lastStockPrice = quotes.price.regularMarketPrice;
                 lastStockAmount = amount;
 
                 self.handler.state = states.BUYMODE;
-                self.emit(':ask', `Buying ${lastStockAmount} ${lastStock} will cost $${lastStockPrice * lastStockAmount}. Continue?`, BUY_REPROMPT);
+                self.emit(':ask', `Buying ${lastStockAmount} ${stockName} will cost $${lastStockPrice * lastStockAmount}. Continue?`
+                    , BUY_REPROMPT);
             });
         });
     },
@@ -280,8 +302,11 @@ const queryHandlers = {
                 self.emit(':tellWithCard', errorMessage, SKILL_NAME, imageObj)
             }
 
-            const symbol = results[0].symbol;
-            console.log('parsed symbol:', symbol);
+
+            const mostLikelyStock = results[0];
+            const symbol = mostLikelyStock.symbol;
+            const stockName = mostLikelyStock.name;
+            console.log(`parsed most likely stockName/symbol: ${stockName}/${symbol}`);
 
             yahoo.quote({
                 symbol: [symbol],
@@ -291,12 +316,13 @@ const queryHandlers = {
                     self.emit(':tellWithCard', err, SKILL_NAME, imageObj)
                 }
 
-                lastStock = symbol;
+                lastStockSymbol = symbol;
                 lastStockPrice = quotes.price.regularMarketPrice;
                 lastStockAmount = amount;
 
                 self.handler.state = states.SELLMODE;
-                self.emit(':ask', `Selling ${lastStockAmount} ${lastStock} would yield $${lastStockPrice * lastStockAmount}. Continue?`, SELL_REPROMPT);
+                self.emit(':ask', `Selling ${lastStockAmount} ${stockName} would yield $${lastStockPrice * lastStockAmount}. Continue?`
+                    , SELL_REPROMPT);
             });
         });
     },
@@ -309,13 +335,21 @@ const queryHandlers = {
     // ** AMAZON INTENTS BELOW ** //
 
     'AMAZON.HelpIntent': function () {
+        this.handlers.state = '';
         this.emit(':ask', HELP_MESSAGE, HELP_MESSAGE);
     },
     'AMAZON.CancelIntent': function () {
+        this.handlers.state = '';
         this.emit(':tell', STOP_MESSAGE);
     },
     'AMAZON.StopIntent': function () {
+        this.handlers.state = '';
         this.emit(':tell', STOP_MESSAGE);
+    },
+    'Unhandled': function() {
+        console.log("UNHANDLED");
+        const message = "Sorry I didn't get that." + HELP_MESSAGE;
+        this.emit(':ask', message, message);
     }
 };
 
@@ -323,5 +357,6 @@ exports.handler = function (event, context, callback) {
     const alexa = Alexa.handler(event, context);
     alexa.APP_ID = APP_ID;
     alexa.registerHandlers(queryHandlers, restartHandlers, sellHandlers, buyHandlers);
+    alexa.dynamoDBTableName = 'StockSim';
     alexa.execute();
 };

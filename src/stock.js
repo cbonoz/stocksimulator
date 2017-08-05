@@ -3,8 +3,8 @@ const library = (function () {
 
     const appName = 'Stock Simulator';
     const welcomeText = "Welcome to " + appName + ". I am a verbal simulator for stock trading.";
-    const actionText = "You can perform an action like 'buy 100 AMAZON', or 'sell 100 GOOGLE'.";
-    const helpText = "You can say 'my portfolio' for current balance information, or " + actionText;
+    const actionText = "You can perform an action like 'buy 100 shares of AMAZON', or 'sell 100 shares of GOOGLE'.";
+    const helpText = "You can say something like 'my portfolio', or " + actionText;
     const exitText = 'Closed ' + appName + ".";
     const noResultsText = "Could not find any results for: ";
     const authErrorText = "There was an authentication issue while retrieving your information, please reinstall " +
@@ -29,15 +29,23 @@ const library = (function () {
         return `You currently have ${balance} available, what would you like to do?`;
     }
 
-    function portfolioMessage(stockValue, cashValue) {
+    function portfolioMessage(stockMap, stockValue, cashValue) {
         stockValue = Math.round(stockValue * 100) / 100;
         cashValue = Math.round(cashValue);
-        return `You currently have ${stockValue} of stock and ${cashValue} cash in your account, ` +
-            `for a total value of $${stockValue + cashValue}.`
+
+        let stockArr = [];
+        Object.keys(stockMap).map((stock) => {
+            stockArr.push(`${stockMap[stock]} ${stock}`)
+        });
+
+        const stockString = stockArr.join(", ");
+
+        return `You currently have ${stockString} in your account with $${cashValue}, ` +
+            `for a net value of $${stockValue + cashValue}.`;
     }
 
     function newPortfolioMessage(cashValue) {
-        return `${welcomeText} You are starting a new account with $${cashValue} in your account. ${actionText}`;
+        return `${welcomeText} You currently have a new account with $${cashValue} available. ${actionText}`;
     }
 
     const cid = 'amzn1.application-oa2-client.9067f49fda8e4332916bb47dd513e34e';

@@ -4,9 +4,6 @@
       "intent": "LaunchIntent"
     },
     {
-      "intent": "NewPortfolioIntent"
-    },
-    {
       "intent": "QuoteIntent",
       "slots": [
         {
