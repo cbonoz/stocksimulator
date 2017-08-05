@@ -191,10 +191,9 @@ const queryHandlers = {
             const symbols = Object.keys(stockMap);
             console.log('symbols: '+ symbols);
 
-            // This replaces the deprecated snapshot() API
-
             co(function *() {
 
+                // Gather and resolve promises simultaneously.
                 const promises = symbols.map((symbol) => {
                     return Promise.resolve(yahoo.quote(symbol, ['price']));
                 });
@@ -215,6 +214,7 @@ const queryHandlers = {
                     console.log(quote.price.shortName, price);
                     stockValue += stockMap[symbols[i]] * price
                 }
+
                 // Check if new account
                 let message = "";
                 if (stockValue === 0 && balance === stock.STARTING_BALANCE) {
@@ -250,7 +250,7 @@ const queryHandlers = {
 
             yahoo.quote({
                 symbol: [symbol],
-                modules: ['price', 'summaryDetail'] // see the docs for the full list
+                modules: ['price'] // see the docs for the full list
             }, function (err, quotes) {
                 if (err) {
                     self.emit(':tellWithCard', err, SKILL_NAME, imageObj)
@@ -285,7 +285,7 @@ const queryHandlers = {
 
             yahoo.quote({
                 symbol: [symbol],
-                modules: ['price', 'summaryDetail'] // see the docs for the full list
+                modules: ['price'] // see the docs for the full list
             }, function (err, quotes) {
                 if (err) {
                     self.emit(':tellWithCard', err, SKILL_NAME, imageObj)
@@ -322,7 +322,6 @@ const queryHandlers = {
 exports.handler = function (event, context, callback) {
     const alexa = Alexa.handler(event, context);
     alexa.APP_ID = APP_ID;
-    alexa.dynamoDBTableName = 'StockSimulator'; // That's it!
     alexa.registerHandlers(queryHandlers, restartHandlers, sellHandlers, buyHandlers);
     alexa.execute();
 };
