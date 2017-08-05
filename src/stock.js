@@ -41,11 +41,11 @@ const library = (function () {
         const stockString = stockArr.join(", ");
 
         return `You currently have ${stockString} in your account with $${cashValue}, ` +
-            `for a net value of $${stockValue + cashValue}.`;
+            `for a total value of $${stockValue + cashValue}.`;
     }
 
     function newPortfolioMessage(cashValue) {
-        return `${welcomeText} You currently have a new account with $${cashValue} available. ${actionText}`;
+        return `${welcomeText} You have a new account with $${cashValue} available. ${actionText}`;
     }
 
     const cid = 'amzn1.application-oa2-client.9067f49fda8e4332916bb47dd513e34e';

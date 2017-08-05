@@ -155,7 +155,7 @@ const restartHandlers = Alexa.CreateStateHandler(states.RESTARTMODE, {
     'Unhandled': function () {
         console.log("UNHANDLED");
         const message = "Sorry I didn't get that. Say yes to restart your account or no to cancel";
-        this.emit(':tell', message, message);
+        this.emit(':ask', message, message);
     }
 });
 
@@ -335,7 +335,7 @@ const queryHandlers = {
 
     'RestartIntent': function () {
         this.handler.state = states.RESTARTMODE;
-        const resetMessage = `Did you want to restart your account? This will reset your balance to ${stock.STARTING_BALANCE}. ${CONFIRM_MESSAGE}`;
+        const resetMessage = `Did you want to reset your account? This will set your balance back to ${stock.STARTING_BALANCE}. ${CONFIRM_MESSAGE}`;
         this.emit(':ask', resetMessage, resetMessage);
     },
 
