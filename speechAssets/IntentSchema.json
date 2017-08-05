@@ -1,7 +1,20 @@
 {
   "intents": [
     {
-      "intent": "LaunchIntent"
+      "intent": "LaunchRequest"
+    },
+     {
+      "intent": "NoRestartIntent"
+    }, {
+      "intent": "YesRestartIntent"
+    }, {
+      "intent": "NoBuyIntent"
+    }, {
+      "intent": "YesBuyIntent"
+    }, {
+      "intent": "NoSellIntent"
+    }, {
+      "intent": "YesSellIntent"
     },
     {
       "intent": "AMAZON.StartOverIntent"
