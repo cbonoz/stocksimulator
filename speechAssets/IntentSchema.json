@@ -4,6 +4,9 @@
       "intent": "LaunchIntent"
     },
     {
+      "intent": "AMAZON.StartOverIntent"
+    },
+    {
       "intent": "QuoteIntent",
       "slots": [
         {

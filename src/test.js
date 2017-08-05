@@ -42,6 +42,35 @@ const amount = 100;
 //     });
 // });
 
+request(stock.getClosestSymbolUrl(stockName), function (error, response, body) {
+    const bodyJson = JSON.parse(body);
+
+    const results = bodyJson.ResultSet.Result;
+    if (!results.length || error) {
+        const errorMessage = `Could not find a symbol match for ${stockName}, try rephrasing or ask for another company?`;
+        console.log(errorMessage);
+        self.emit(':tellWithCard', errorMessage, SKILL_NAME, imageObj)
+    }
+
+    const symbol = results[0].symbol;
+    console.log('parsed symbol:', symbol);
+    yahoo.quote({
+        symbol: [symbol],
+        modules: ['price', 'summaryDetail'] // see the docs for the full list
+    }, function (err, res) {
+        if (err) {
+            self.emit(':tellWithCard', err, SKILL_NAME, imageObj)
+        }
+
+        // current price from the quote response.
+        const sharePrice = res.price.regularMarketPrice;
+        const regularMarketChange = res.price.regularMarketChange;
+        const message = `The last market price for ${symbol} was $${sharePrice}, recently changing by ${regularMarketChange}%`;
+
+        console.log(':tellWithCard', message, SKILL_NAME, imageObj)
+    });
+});
+
 // BUY
 request(stock.getClosestSymbolUrl(stockName), function (error, response, body) {
     const bodyJson = JSON.parse(body);

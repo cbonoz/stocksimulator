@@ -82,10 +82,10 @@ const buyHandlers = Alexa.CreateStateHandler(states.BUYMODE, {
         });
     }
     ,
-    'Unhandled': function() {
+    'Unhandled': function () {
         console.log("UNHANDLED");
         const message = "Sorry I didn't get that. Say yes to buy or no to cancel";
-        this.emit(':tell', message, message);
+        this.emit(':ask', message, message);
     }
 });
 
@@ -129,10 +129,10 @@ const sellHandlers = Alexa.CreateStateHandler(states.SELLMODE, {
         });
     }
     ,
-    'Unhandled': function() {
+    'Unhandled': function () {
         console.log("UNHANDLED");
         const message = "Sorry I didn't get that. Say yes to sell or no to cancel";
-        this.emit(':tell', message, message);
+        this.emit(':ask', message, message);
     }
 });
 
@@ -152,7 +152,7 @@ const restartHandlers = Alexa.CreateStateHandler(states.RESTARTMODE, {
             self.emit(':tell', "Error reseting account balance: " + err);
         })
     },
-    'Unhandled': function() {
+    'Unhandled': function () {
         console.log("UNHANDLED");
         const message = "Sorry I didn't get that. Say yes to restart your account or no to cancel";
         this.emit(':tell', message, message);
@@ -182,7 +182,7 @@ const queryHandlers = {
             console.log('parsed symbol:', symbol);
             yahoo.quote({
                 symbol: [symbol],
-                modules: ['price', 'summaryDetail'] // see the docs for the full list
+                modules: ['price'] // see the docs for the full list
             }, function (err, res) {
                 if (err) {
                     self.emit(':tellWithCard', err, SKILL_NAME, imageObj)
@@ -190,7 +190,9 @@ const queryHandlers = {
 
                 // current price from the quote response.
                 const sharePrice = res.price.regularMarketPrice;
-                const message = `The last regular market price for ${symbol} was $${sharePrice}`;
+                const regularMarketChange = res.price.regularMarketChange;
+                const message = `The last market price for ${symbol} was $${sharePrice}, recently changing by ${regularMarketChange}%`;
+
                 self.emit(':tellWithCard', message, SKILL_NAME, imageObj)
             });
         });
@@ -205,7 +207,7 @@ const queryHandlers = {
 
             const stockMap = portfolio.getStockMap();
             const symbols = Object.keys(stockMap);
-            console.log('symbols: '+ symbols);
+            console.log('symbols: ' + symbols);
 
             co(function *() {
 
@@ -326,9 +328,14 @@ const queryHandlers = {
             });
         });
     },
+
+    'AMAZON.StartOverIntent': function () {
+        this.emit("RestartIntent")
+    },
+
     'RestartIntent': function () {
         this.handler.state = states.RESTARTMODE;
-        const resetMessage = `This will reset your account and reset your balance to ${stock.STARTING_BALANCE}. ${CONFIRM_MESSAGE}`;
+        const resetMessage = `Did you want to restart your account? This will reset your balance to ${stock.STARTING_BALANCE}. ${CONFIRM_MESSAGE}`;
         this.emit(':ask', resetMessage, resetMessage);
     },
 
@@ -346,7 +353,7 @@ const queryHandlers = {
         this.handlers.state = '';
         this.emit(':tell', STOP_MESSAGE);
     },
-    'Unhandled': function() {
+    'Unhandled': function () {
         console.log("UNHANDLED");
         const message = "Sorry I didn't get that." + HELP_MESSAGE;
         this.emit(':ask', message, message);
