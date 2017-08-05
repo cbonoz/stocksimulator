@@ -7,37 +7,46 @@ const library = (function () {
     let userId = null;
     let portfolio = {};
 
+    function getStockMap() {
+        return JSON.parse(portfolio['StockMap']);
+    }
+
     function setPortfolio(p) {
+        if (p['StockMap'] === null || p['StockMap'] === '') {
+            p['StockMap'] = '{}';
+        }
         portfolio = p;
     }
 
     function updateHolding(stock, deltaShares, deltaBalance) {
 
-        if (portfolio['balance'] + deltaBalance < 0) {
+        if (portfolio['Balance'] + deltaBalance < 0) {
             return false;
         }
 
         // Update the portfolio.
-        const stocks = portfolio['stock_holdings'];
-        if (stocks.hasOwnProperty(stock)) {
-            if (stocks[stock] + deltaShares < 0) {
-                return false;
-            }
-            stocks[stock] += deltaShares;
-        } else {
+        const stockMap = getStockMap();
+        if (!stockMap.hasOwnProperty(stock)) {
+            stockMap[stock] = 0;
             if (deltaShares < 0) {
                 return false;
             }
-            stocks[stock] = deltaShares;
         }
 
-        portfolio['balance'] += deltaBalance;
+        if (stockMap[stock] + deltaShares < 0) {
+            return false;
+        }
+
+        stockMap[stock] += deltaShares;
+
+        portfolio['StockMap'] = JSON.stringify(stockMap);
+        portfolio['Balance'] += deltaBalance;
 
         return true; // user shouldn't have below 0 balance.
     }
 
     function getPortfolio() {
-        return p;
+        return portfolio;
     }
 
     function setUser(u) {
@@ -48,13 +57,18 @@ const library = (function () {
         return userId;
     }
 
+    function getUserFromEvent(event) {
+        return event.session.user.userId;
+    }
 
     return {
-        updatePortfolio: updateHolding,
+        updateHolding: updateHolding,
         setUser: setUser,
         getUser: getUser,
         setPortfolio: setPortfolio,
         getPortfolio: getPortfolio,
+        getUserFromEvent: getUserFromEvent,
+        getStockMap: getStockMap,
     };
 
 })();

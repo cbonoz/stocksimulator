@@ -11,15 +11,16 @@ const library = (function () {
         "or re-authenticate the alexa app";
     const askAgainText = "Ask me something else?";
     const serverErrorText = "Could not retrieve information from server. " + askAgainText;
-    const startingBalance = 25000;
+    const startingBalance = 100000;
 
-    function getClosestSymbolUrl(stockName)  {
+    function getClosestSymbolUrl(stockName) {
         return `http://d.yimg.com/aq/autoc?query=${stockName}&region=US&lang=en-US`;
     }
 
     function insufficientShares(amount, currentShares, stock) {
         return `Can't sell ${amount}. You currently only have ${currentShares} of ${stock}.`;
     }
+
     function insufficientBalance(cost, balance) {
         return `You need ${cost} to make that purchase, you currently have ${balance}.`;
     }
@@ -29,11 +30,14 @@ const library = (function () {
     }
 
     function portfolioMessage(stockValue, cashValue) {
-        return `You currently have ${stockValue} worth of stock and $${cashValue} in your account, for a total value of ${totalValue}.`
+        stockValue = Math.round(stockValue * 100) / 100;
+        cashValue = Math.round(cashValue);
+        return `You currently have ${stockValue} of stock and ${cashValue} cash in your account, ` +
+            `for a total value of $${stockValue + cashValue}.`
     }
 
     function newPortfolioMessage(cashValue) {
-        return `${welcomeText}. You are starting with a new account with $${cashValue} in your account. ${actionText}`;
+        return `${welcomeText} You are starting a new account with $${cashValue} in your account. ${actionText}`;
     }
 
     const cid = 'amzn1.application-oa2-client.9067f49fda8e4332916bb47dd513e34e';

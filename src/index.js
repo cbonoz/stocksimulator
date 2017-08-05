@@ -2,6 +2,7 @@
 const Alexa = require('alexa-sdk');
 const yahoo = require('yahoo-finance');
 const request = require('request');
+const co = require('co');
 
 // local libraries.
 const stock = require('./stock');
@@ -36,7 +37,6 @@ const imageObj = {
 
 const states = {
     QUERYMODE: '_QUERYMODE', // User is deciding which query to run
-    STOCKMODE: '_STOCKMODE',  // Prompt the user to say the number of shares followed by the stock. For example, 100 AMZN.
     BUYMODE: '_BUYMODE',
     SELLMODE: '_SELLMODE',
     RESTARTMODE: '_RESTARTMODE'
@@ -45,10 +45,6 @@ const states = {
 let lastStock = null;
 let lastStockAmount = null;
 let lastStockPrice = null;
-
-function getUserFromEvent(event) {
-    return event.session.user.userId;
-}
 
 const buyHandlers = Alexa.CreateStateHandler(states.BUYMODE, {
     'AMAZON.NoIntent': function () {
@@ -60,16 +56,16 @@ const buyHandlers = Alexa.CreateStateHandler(states.BUYMODE, {
         this.handler.state = states.QUERYMODE;
         // stock and number of shares.
         const self = this;
-        const requestUrl = api.getPortfolio(getUserFromEvent(this.event));
+        const requestUrl = api.getPortfolio(portfolio.getUserFromEvent(this.event));
         const promise = api.createPromise(requestUrl, "GET");
         promise.then((res) => {
-            const myPortfolio = JSON.parse(res);
+            const myPortfolio = res;
+            portfolio.setPortfolio(myPortfolio);
             const purchaseTotal = lastStockAmount * lastStockPrice;
 
             // Attempt to update with the buy transaction (returns false if impossible).
-            if (!portfolio.updatePortfolio(lastStock, lastStockAmount, -purchaseTotal)) {
-                self.emit(":tell", "You don't have sufficient capital, you would need "
-                    + (purchaseTotal - myPortfolio['balance']) + " more dollars.");
+            if (!portfolio.updateHolding(lastStock, lastStockAmount, -purchaseTotal)) {
+                self.emit(":tell", `You need $${purchaseTotal - myPortfolio['Balance']} to complete this purchase`);
             }
 
             const requestUrl = api.postPorfolio();
@@ -78,7 +74,7 @@ const buyHandlers = Alexa.CreateStateHandler(states.BUYMODE, {
                     self.emit("Error buying stock: " + err);
                 }
 
-                this.emit(':ask', `Successfully purchased ${lastStockAmount} ${lastStock} shares. What now?`, HELP_MESSAGE);
+                self.emit(':ask', `Successfully purchased ${lastStockAmount} ${lastStock} shares. What now?`, HELP_MESSAGE);
 
             });
         }).catch(function (err) {
@@ -98,19 +94,18 @@ const sellHandlers = Alexa.CreateStateHandler(states.SELLMODE, {
         this.handler.state = states.QUERYMODE;
         // stock and number of shares.
         const self = this;
-        const requestUrl = api.getPortfolio(getUserFromEvent(this.event));
+        const requestUrl = api.getPortfolio(portfolio.getUserFromEvent(this.event));
         const promise = api.createPromise(requestUrl, "GET");
         promise.then((res) => {
-            const myPortfolio = JSON.parse(res);
-            const stockMap = JSON.parse(myPortfolio['stock_holdings']);
-
+            portfolio.setPortfolio(res);
+            const stockMap = portfolio.getStockMap();
 
             const saleTotal = lastStockAmount * lastStockPrice;
 
             // Update with the sell transaction.
-            if (!portfolio.updatePortfolio(lastStock, -lastStockAmount, saleTotal)) {
+            if (!portfolio.updateHolding(lastStock, -lastStockAmount, saleTotal)) {
                 const currentShares = stockMap.hasOwnProperty(lastStock) ? stockMap[lastStock] : 0;
-                self.emit(":tell", `You don't have enough shares of ${lastStock} to sell - you requested` +
+                self.emit(":tell", `You don't have enough shares of ${lastStock} to sell - you asked to sell ` +
                     `${lastStockAmount}, but currently have ${currentShares}.`);
             }
 
@@ -138,7 +133,7 @@ const restartHandlers = Alexa.CreateStateHandler(states.RESTARTMODE, {
     },
     'AMAZON.YesIntent': function () {
         this.handler.state = states.QUERYMODE;
-        const requestUrl = api.getStartOver(getUserFromEvent(this.event));
+        const requestUrl = api.getStartOver(portfolio.getUserFromEvent(this.event));
         const promise = api.createPromise(requestUrl, "GET");
         promise.then((res) => {
             this.emit(':ask', `Successfully reset account and balance. What now?`, HELP_MESSAGE);
@@ -185,44 +180,50 @@ const queryHandlers = {
         });
     },
     'PortfolioIntent': function () {
+        const self = this;
         this.handler.state = states.QUERYMODE;
-        const requestUrl = api.getPortfolio(getUserFromEvent(this.event));
+        const requestUrl = api.getPortfolio(portfolio.getUserFromEvent(this.event));
         const promise = api.createPromise(requestUrl, "GET");
         promise.then((res) => {
-            const myPortfolio = JSON.parse(res);
-            const stockMap = JSON.parse(myPorfolio['stock_holdings']);
-            const balance = myPorfolio['balance'];
-            console.log('stockMap: ' + JSON.stringify(stockMap));
+            portfolio.setPortfolio(res);
 
-            const self = this;
-            const symbols = stockMap.keys();
+            const stockMap = portfolio.getStockMap();
+            const symbols = Object.keys(stockMap);
+            console.log('symbols: '+ symbols);
 
             // This replaces the deprecated snapshot() API
-            yahoo.quote({
-                symbol: [symbols],
-                modules: ['price', 'summaryDetail'] // see the docs for the full list
-            }, function (err, res) {
-                if (err) {
-                    self.emit(':tellWithCard', err, SKILL_NAME, imageObj)
-                }
+
+            co(function *() {
+
+                const promises = symbols.map((symbol) => {
+                    return Promise.resolve(yahoo.quote(symbol, ['price']));
+                });
+
+                const res = yield promises;
+                console.log(res);
+
+                const stockMap = portfolio.getStockMap();
+                const balance = portfolio.getPortfolio()['Balance'];
+                console.log('stockMap: ' + JSON.stringify(stockMap));
 
                 let stockValue = 0;
-                for (let quote in res) {
+                for (let i in res) {
                     // current price from the quote response.
+                    const quote = res[i];
                     const price = quote.price.regularMarketPrice;
 
                     console.log(quote.price.shortName, price);
-                    stockValue += stockMap[quote.price.symbol] * price
+                    stockValue += stockMap[symbols[i]] * price
                 }
                 // Check if new account
                 let message = "";
                 if (stockValue === 0 && balance === stock.STARTING_BALANCE) {
-                    message = stock.portfolioMessage(stockValue, balance);
-                } else {
                     message = stock.newPortfolioMessage(balance);
+                } else {
+                    message = stock.portfolioMessage(stockValue, balance);
                 }
                 console.log('portfolio message: ', message);
-                this.emit(':ask', message, message);
+                self.emit(':ask', message, message);
             });
         }).catch(function (err) {
             // Portfolio API call failed...
@@ -255,13 +256,10 @@ const queryHandlers = {
                     self.emit(':tellWithCard', err, SKILL_NAME, imageObj)
                 }
 
-                const sharePrice = res.price.regularMarketPrice;
-                const cost = amount * sharePrice;
-                console.log(`sharePrice: ${sharePrice}`);
-
                 lastStock = symbol;
-                lastStockPrice = cost;
+                lastStockPrice = quotes.price.regularMarketPrice;
                 lastStockAmount = amount;
+
                 self.handler.state = states.BUYMODE;
                 self.emit(':ask', `Buying ${lastStockAmount} ${lastStock} will cost $${lastStockPrice * lastStockAmount}. Continue?`, BUY_REPROMPT);
             });
@@ -293,12 +291,8 @@ const queryHandlers = {
                     self.emit(':tellWithCard', err, SKILL_NAME, imageObj)
                 }
 
-                const sharePrice = res.price.regularMarketPrice;
-                const cost = amount * sharePrice;
-                console.log(`sharePrice: ${sharePrice}`);
-
                 lastStock = symbol;
-                lastStockPrice = cost;
+                lastStockPrice = quotes.price.regularMarketPrice;
                 lastStockAmount = amount;
 
                 self.handler.state = states.SELLMODE;
