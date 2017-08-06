@@ -4,6 +4,9 @@
       "intent": "LaunchRequest"
     },
      {
+      "intent": "SessionEndedIntent"
+    },
+    {
       "intent": "NoRestartIntent"
     }, {
       "intent": "YesRestartIntent"
@@ -15,9 +18,6 @@
       "intent": "NoSellIntent"
     }, {
       "intent": "YesSellIntent"
-    },
-    {
-      "intent": "AMAZON.StartOverIntent"
     },
     {
       "intent": "QuoteIntent",
@@ -68,6 +68,15 @@
     },
     {
       "intent": "AMAZON.CancelIntent"
+    },
+    {
+      "intent": "AMAZON.YesIntent"
+    },
+    {
+      "intent": "AMAZON.NoIntent"
+    },
+    {
+      "intent": "AMAZON.StartOverIntent"
     }
   ]
 }
