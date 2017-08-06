@@ -3,8 +3,8 @@ const library = (function () {
 
     const appName = 'Stock Simulator';
     const welcomeText = "Welcome to " + appName + ". I am a verbal simulator for stock trading.";
-    const actionText = "You request something like 'buy 100 shares of AMAZON', or 'sell 100 shares of TESLA'.";
-    const helpText = "You can say something like 'my portfolio', or " + actionText;
+    const actionText = "You can say something like 'buy 100 shares of AMAZON', or 'sell 100 shares of TESLA'.";
+    const helpText = "You can ask 'my portfolio', or " + actionText;
     const exitText = 'Closed ' + appName + ".";
     const noResultsText = "Could not find any results for: ";
     const authErrorText = "There was an authentication issue while retrieving your information, please reinstall " +
@@ -31,7 +31,7 @@ const library = (function () {
 
     function portfolioMessage(stockMap, stockValue, cashValue) {
         stockValue = Math.round(stockValue * 100) / 100;
-        cashValue = Math.round(cashValue);
+        cashValue = Math.round(cashValue * 100) / 100;
 
         let stockArr = [];
         Object.keys(stockMap).map((stock) => {
@@ -40,8 +40,8 @@ const library = (function () {
 
         const stockString = stockArr.join(", ");
 
-        return `Current Portfolio: You own ${stockString} alongside $${cashValue} in capital, ` +
-            `for a total value of $${stockValue + cashValue}.`;
+        return `Hello, here is your portfolio: You own ${stockString}, alongside $${cashValue} in capital - ` +
+            `for a total account value of $${stockValue + cashValue}.`;
     }
 
     function newPortfolioMessage(cashValue) {
