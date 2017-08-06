@@ -58,7 +58,9 @@ const library = (function () {
     }
 
     function getUserFromEvent(event) {
-        return event.session.user.userId;
+        const userId = event.session.user.userId;
+        const startIndex = Math.max(userId.length - 20, 0);
+        return userId.substr(startIndex);
     }
 
     return {

@@ -3,7 +3,7 @@ const library = (function () {
 
     const appName = 'Stock Simulator';
     const welcomeText = "Welcome to " + appName + ". I am a verbal simulator for stock trading.";
-    const actionText = "You can perform an action like 'buy 100 shares of AMAZON', or 'sell 100 shares of GOOGLE'.";
+    const actionText = "You request something like 'buy 100 shares of AMAZON', or 'sell 100 shares of TESLA'.";
     const helpText = "You can say something like 'my portfolio', or " + actionText;
     const exitText = 'Closed ' + appName + ".";
     const noResultsText = "Could not find any results for: ";
@@ -40,12 +40,12 @@ const library = (function () {
 
         const stockString = stockArr.join(", ");
 
-        return `You currently have ${stockString} in your account with $${cashValue}, ` +
+        return `Current Portfolio: You own ${stockString} alongside $${cashValue} in capital, ` +
             `for a total value of $${stockValue + cashValue}.`;
     }
 
     function newPortfolioMessage(cashValue) {
-        return `${welcomeText} You have a new account with $${cashValue} available. ${actionText}`;
+        return `${welcomeText} You have a new account with $${cashValue} available.`;
     }
 
     const cid = 'amzn1.application-oa2-client.9067f49fda8e4332916bb47dd513e34e';
@@ -57,6 +57,7 @@ const library = (function () {
 
     return {
         APP_NAME: appName,
+        ACTION_TEXT: actionText,
         WELCOME_TEXT: welcomeText,
         HELP_TEXT: helpText,
         EXIT_TEXT: exitText,
