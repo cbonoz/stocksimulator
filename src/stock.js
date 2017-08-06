@@ -35,7 +35,7 @@ const library = (function () {
 
         let stockArr = [];
         Object.keys(stockMap).map((stock) => {
-            stockArr.push(`${stockMap[stock]} ${stock}`)
+            stockArr.push(`${stockMap[stock]} ${stock} shares`)
         });
 
         const stockString = stockArr.join(", ");

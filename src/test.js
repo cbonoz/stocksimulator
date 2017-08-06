@@ -42,66 +42,66 @@ const amount = 100;
 //     });
 // });
 
-request(stock.getClosestSymbolUrl(stockName), function (error, response, body) {
-    const bodyJson = JSON.parse(body);
-
-    const results = bodyJson.ResultSet.Result;
-    if (!results.length || error) {
-        const errorMessage = `Could not find a symbol match for ${stockName}, try rephrasing or ask for another company?`;
-        console.log(errorMessage);
-        self.emit(':tellWithCard', errorMessage, SKILL_NAME, imageObj)
-    }
-
-    const symbol = results[0].symbol;
-    console.log('parsed symbol:', symbol);
-    yahoo.quote({
-        symbol: [symbol],
-        modules: ['price', 'summaryDetail'] // see the docs for the full list
-    }, function (err, res) {
-        if (err) {
-            self.emit(':tellWithCard', err, SKILL_NAME, imageObj)
-        }
-
-        // current price from the quote response.
-        const sharePrice = res.price.regularMarketPrice;
-        const regularMarketChange = res.price.regularMarketChange;
-        const message = `The last market price for ${symbol} was $${sharePrice}, recently changing by ${regularMarketChange}%`;
-
-        console.log(':tellWithCard', message, SKILL_NAME, imageObj)
-    });
-});
+// request(stock.getClosestSymbolUrl(stockName), function (error, response, body) {
+//     const bodyJson = JSON.parse(body);
+//
+//     const results = bodyJson.ResultSet.Result;
+//     if (!results.length || error) {
+//         const errorMessage = `Could not find a symbol match for ${stockName}, try rephrasing or ask for another company?`;
+//         console.log(errorMessage);
+//         self.emitWithState(':tellWithCard', errorMessage, SKILL_NAME, imageObj)
+//     }
+//
+//     const symbol = results[0].symbol;
+//     console.log('parsed symbol:', symbol);
+//     yahoo.quote({
+//         symbol: [symbol],
+//         modules: ['price', 'summaryDetail'] // see the docs for the full list
+//     }, function (err, res) {
+//         if (err) {
+//             self.emitWithState(':tellWithCard', err, SKILL_NAME, imageObj)
+//         }
+//
+//         // current price from the quote response.
+//         const sharePrice = res.price.regularMarketPrice;
+//         const regularMarketChange = res.price.regularMarketChange;
+//         const message = `The last market price for ${symbol} was $${sharePrice}, recently changing by ${regularMarketChange}%`;
+//
+//         console.log(':tellWithCard', message, SKILL_NAME, imageObj)
+//     });
+// });
 
 // BUY
-request(stock.getClosestSymbolUrl(stockName), function (error, response, body) {
-    const bodyJson = JSON.parse(body);
-
-    const results = bodyJson.ResultSet.Result;
-    if (!results.length || error) {
-        const errorMessage = `Could not find a symbol match for ${stockName}, try rephrasing or ask for another company?`;
-        console.log(errorMessage);
-        console.log(':tellWithCard', errorMessage, SKILL_NAME, imageObj)
-    }
-
-    const mostLikelyStock = results[0];
-    const symbol = mostLikelyStock.symbol;
-    const stockName = mostLikelyStock.name;
-    console.log(`parsed most likely stockName/symbol: ${stockName}/${symbol}`);
-
-    yahoo.quote({
-        symbol: [symbol],
-        modules: ['price', 'summaryDetail'] // see the docs for the full list
-    }, function (err, quotes) {
-        if (err) {
-            console.log(':tellWithCard', err, SKILL_NAME, imageObj)
-        }
-
-        lastStock = symbol;
-        lastStockPrice = quotes.price.regularMarketPrice;
-        lastStockAmount = amount;
-
-        console.log(':ask', `Buying ${lastStockAmount} ${lastStock} will cost $${lastStockPrice * lastStockAmount}. Continue?`)
-    });
-});
+// request(stock.getClosestSymbolUrl(stockName), function (error, response, body) {
+//     const bodyJson = JSON.parse(body);
+//
+//     const results = bodyJson.ResultSet.Result;
+//     if (!results.length || error) {
+//         const errorMessage = `Could not find a symbol match for ${stockName}, try rephrasing or ask for another company?`;
+//         console.log(errorMessage);
+//         console.log(':tellWithCard', errorMessage, SKILL_NAME, imageObj)
+//     }
+//
+//     const mostLikelyStock = results[0];
+//     const symbol = mostLikelyStock.symbol;
+//     const stockName = mostLikelyStock.name;
+//     console.log(`parsed most likely stockName/symbol: ${stockName}/${symbol}`);
+//
+//     yahoo.quote({
+//         symbol: [symbol],
+//         modules: ['price', 'summaryDetail'] // see the docs for the full list
+//     }, function (err, quotes) {
+//         if (err) {
+//             console.log(':tellWithCard', err, SKILL_NAME, imageObj)
+//         }
+//
+//         lastStock = symbol;
+//         lastStockPrice = quotes.price.regularMarketPrice;
+//         lastStockAmount = amount;
+//
+//         console.log(':ask', `Buying ${lastStockAmount} ${lastStock} will cost $${lastStockPrice * lastStockAmount}. Continue?`)
+//     });
+// });
 
 let lastStock = 'amzn';
 let lastStockPrice = 100.50;
@@ -149,7 +149,7 @@ promise.then((res) => {
         if (stockValue === 0 && balance === stock.STARTING_BALANCE) {
             message = stock.newPortfolioMessage(balance);
         } else {
-            message = stock.portfolioMessage(stockValue, balance);
+            message = stock.portfolioMessage(stockMap, stockValue, balance);
         }
         console.log('portfolio message: ', message);
 
