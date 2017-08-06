@@ -388,6 +388,12 @@ const handlers = {
         clearState(self);
         self.emit(':tell', STOP_MESSAGE);
     },
+    'SessionEndedRequest': function () {
+        const self = this;
+        console.log('session ended!');
+        clearState(self);
+        self.emit(':saveState', true);
+    },
 };
 
 exports.handler = function (event, context, callback) {
