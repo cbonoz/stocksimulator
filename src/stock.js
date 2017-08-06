@@ -32,6 +32,7 @@ const library = (function () {
     function portfolioMessage(stockMap, stockValue, cashValue) {
         stockValue = Math.round(stockValue * 100) / 100;
         cashValue = Math.round(cashValue * 100) / 100;
+        const totalValue = stockValue + cashValue
 
         let stockArr = [];
         Object.keys(stockMap).map((stock) => {
@@ -41,11 +42,11 @@ const library = (function () {
         const stockString = stockArr.join(", ");
 
         return `Hello, here is your portfolio: You own ${stockString}, alongside $${cashValue} in capital - ` +
-            `for a total account value of $${stockValue + cashValue}.`;
+            `for a total account value of $${totalValue} .`;
     }
 
     function newPortfolioMessage(cashValue) {
-        return `${welcomeText} You have a new account with $${cashValue} available.`;
+        return `${welcomeText} You have a new account with $${cashValue} available - `;
     }
 
     const cid = 'amzn1.application-oa2-client.9067f49fda8e4332916bb47dd513e34e';
