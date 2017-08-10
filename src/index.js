@@ -17,21 +17,19 @@ const api = require('./api');
 //Make sure to enclose your value in quotes, like this: const APP_ID = "amzn1.ask.skill.bb4045e6-b3e8-4133-b650-72923c5980f1";
 // const APP_ID = 'amzn1.ask.skill.f56869d8-4f28-4773-8185-e5177218108e';
 const APP_ID = 'amzn1.ask.skill.562665fb-3f00-4feb-befc-53177256f19f';
+
 const SKILL_NAME = stock.APP_NAME;
 const HELP_MESSAGE = stock.HELP_TEXT;
 const STOP_MESSAGE = stock.EXIT_TEXT;
 const CONFIRM_MESSAGE = 'Are you sure? Say yes or no.';
-
-const BUY_REPROMPT = "Say a number of shares to buy followed by the stock, such as 'buy 100 shares of amazon', or say cancel.";
-const SELL_REPROMPT = "Say a number of shares to sell followed by the stock, like 'sell 200 shares of google', or say cancel.";
-
+const REPHRASE_PROMPT = 'Try rephrasing or ask for another company.';
 
 const imageObj = {
     smallImageUrl: './img/stock_sim_108.png',
     largeImageUrl: './img/stock_sim_512.png',
 };
 
-let stateMap = {};
+let conversationStateMap = {};
 
 //=========================================================================================================================================
 // Skill logic below
@@ -46,13 +44,13 @@ const states = {
 
 function setState(event, state) {
     const userId = portfolio.getUserFromEvent(event);
-    stateMap[userId] = state;
-    console.log('setState:', userId, state);
+    conversationStateMap[userId] = state;
+    console.log('setState:', userId, ' in state ', state);
 }
 
 function getState(event) {
     const userId = portfolio.getUserFromEvent(event);
-    const state = stateMap.hasOwnProperty(userId) ? stateMap[userId] : states.MAINSTATE;
+    const state = conversationStateMap.hasOwnProperty(userId) ? conversationStateMap[userId] : states.MAINSTATE;
     console.log('getState:', userId, state);
     return state;
 }
@@ -157,7 +155,13 @@ const handlers = {
                     self.emit("Error buying stock: " + err);
                 }
                 const remainingCapital = myPortfolio['Balance'] - purchaseTotal;
-                self.emit(':ask', `Successfully purchased ${lastStockAmount} ${lastStockName} shares, you have $${remainingCapital} remaining. What next?`, HELP_MESSAGE);
+
+                self.emit(':askWithCard',
+                    `Successfully purchased ${lastStockAmount} ${lastStockName} shares, you have $${remainingCapital} remaining. What next?`,
+                    HELP_MESSAGE,
+                    SKILL_NAME,
+                    imageObj
+                );
 
             });
         }).catch(function (err) {
@@ -212,7 +216,12 @@ const handlers = {
                     self.emit(":tell", "Error selling stock: " + err);
                 }
 
-                self.emit(':ask', `Successfully sold ${lastStockAmount} ${lastStockName} shares for $${saleTotal}. What next?`, HELP_MESSAGE);
+                self.emit(':askWithCard',
+                    `Successfully sold ${lastStockAmount} ${lastStockName} shares for $${saleTotal}. What next?`,
+                    HELP_MESSAGE,
+                    SKILL_NAME,
+                    imageObj
+                );
 
             });
         }).catch(function (err) {
@@ -232,6 +241,7 @@ const handlers = {
         const requestUrl = api.getStartOver(portfolio.getUserFromEvent(self.event));
         const promise = api.createPromise(requestUrl, "GET");
         promise.then((res) => {
+            console.log(res);
             self.emit(':ask', `Successfully reset account and balance. What now?`, HELP_MESSAGE);
         }).catch((err) => {
             self.emit(':tell', "Error resetting account balance: " + err);
@@ -245,31 +255,35 @@ const handlers = {
     'QuoteIntent': function () {
         const self = this;
         setState(self.event, states.MAINSTATE);
-        const stockName = self.event.request.intent.slots.Stock.value;
-        request(stock.getClosestSymbolUrl(stockName), function (error, response, body) {
+        const quoteStockName = self.event.request.intent.slots.Stock.value;
+        request(stock.getClosestSymbolUrl(quoteStockName), function (error, response, body) {
             const bodyJson = JSON.parse(body);
 
             const results = bodyJson.ResultSet.Result;
             if (!results.length || error) {
-                const errorMessage = `Could not find a symbol match for ${stockName}, try rephrasing or ask for another company?`;
+                const errorMessage = `Could not find a symbol match for ${quoteStockName}.` + REPHRASE_PROMPT;
                 console.log(errorMessage);
-                self.emit(':tellWithCard', errorMessage, SKILL_NAME, imageObj)
+                self.emit(':tellWithCard', errorMessage, SKILL_NAME, imageObj);
+                return;
             }
 
-            const symbol = results[0].symbol;
+            const mostLikelyStock = results[0];
+            const symbol = mostLikelyStock.symbol;
+            const likelyStockName = mostLikelyStock.name;
+
             console.log('parsed symbol:', symbol);
             yahoo.quote({
                 symbol: [symbol],
                 modules: ['price'] // see the docs for the full list
             }, function (err, res) {
                 if (err) {
-                    self.emit(':tellWithCard', err, SKILL_NAME, imageObj)
+                    self.emit(':tell', "Web error retrieving stock information, " + err);
                 }
 
                 // current price from the quote response.
                 const sharePrice = res.price.regularMarketPrice;
                 const regularMarketChange = Math.round(res.price.regularMarketChange * 100) / 100;
-                const message = `The last market price for ${symbol} was $${sharePrice}, with a recent change of ${regularMarketChange}`;
+                const message = `The last market price for ${likelyStockName}, symbol ${symbol}, was $${sharePrice}, with a recent change of $${regularMarketChange}`;
 
                 self.emit(':tellWithCard', message, SKILL_NAME, imageObj)
             });
@@ -298,7 +312,7 @@ const handlers = {
                 console.log(res);
 
                 const stockMap = portfolio.getStockMap();
-                const balance = portfolio.getPortfolio()['Balance'];
+                const cashBalance = portfolio.getPortfolio()['Balance'];
                 console.log('stockMap: ' + JSON.stringify(stockMap));
 
                 let stockValue = 0;
@@ -313,10 +327,16 @@ const handlers = {
 
                 let message = "";
                 // Check if new account
-                if (stockValue === 0 && balance === stock.STARTING_BALANCE) {
-                    message = stock.newPortfolioMessage(balance);
+                if (stockValue === 0 && cashBalance === stock.STARTING_BALANCE) {
+                    message = stock.newPortfolioMessage(cashBalance);
                 } else {
-                    message = stock.portfolioMessage(stockMap, stockValue, balance);
+                    let stockArr = [];
+                    Object.keys(stockMap).map((symb) => {
+                        stockArr.push(`${stockMap[symb]} ${stock.getNameFromSymbol(symb)} shares`)
+                    });
+
+                    const stockString = stockArr.join(", ");
+                    message = stock.portfolioMessage(stockString, stockValue, cashBalance);
                 }
                 console.log('portfolio message: ', message);
                 self.emit(':ask', message + stock.ACTION_TEXT, stock.ACTION_TEXT);
@@ -331,40 +351,46 @@ const handlers = {
 
     'BuyIntent': function () {
         const self = this;
-        const amount = parseInt(this.event.request.intent.slots.Amount.value);
-        const stockName = this.event.request.intent.slots.Stock.value;
+        const amount = parseInt(self.event.request.intent.slots.Amount.value);
+        const stockName = self.event.request.intent.slots.Stock.value;
 
         request(stock.getClosestSymbolUrl(stockName), function (error, response, body) {
             const bodyJson = JSON.parse(body);
 
             const results = bodyJson.ResultSet.Result;
             if (!results.length || error) {
-                const errorMessage = `Could not find a symbol match for ${stockName}, try rephrasing or ask for another company?`;
-                console.log(errorMessage);
+                const errorMessage = `Could not find a symbol match for ${stockName}.` + REPHRASE_PROMPT;
+                console.log(error, errorMessage);
                 setState(self.event, states.MAINSTATE);
-                self.emit(':tellWithCard', errorMessage, SKILL_NAME, imageObj)
+                self.emit(':askWithCard',
+                    errorMessage,
+                    REPHRASE_PROMPT,
+                    SKILL_NAME,
+                    imageObj);
+                return;
             }
 
             const mostLikelyStock = results[0];
             const symbol = mostLikelyStock.symbol;
-            const stockName = mostLikelyStock.name;
-            console.log(`parsed most likely stockName/symbol: ${stockName}/${symbol}`);
+            const likelyStockName = mostLikelyStock.name;
+            console.log(`parsed most likely stockName/symbol: ${likelyStockName}/${symbol}`);
 
             yahoo.quote({
                 symbol: [symbol],
                 modules: ['price'] // see the docs for the full list
             }, function (err, quotes) {
                 if (err) {
-                    self.emit(':tellWithCard', err, SKILL_NAME, imageObj)
+                    self.emit(':tellWithCard', err, SKILL_NAME, imageObj);
+                    return;
                 }
 
-                self.attributes['lastStockName'] = stockName;
+                self.attributes['lastStockName'] = likelyStockName;
                 self.attributes['lastStockSymbol'] = symbol;
                 self.attributes['lastStockPrice'] = quotes.price.regularMarketPrice;
                 self.attributes['lastStockAmount'] = amount;
 
                 setState(self.event, states.BUYSTATE);
-                const buyString = `Buying ${self.attributes['lastStockAmount']} ${stockName} will cost $${self.attributes['lastStockPrice'] * self.attributes['lastStockAmount']}. Continue?`;
+                const buyString = `Buying ${self.attributes['lastStockAmount']} ${likelyStockName} will cost $${self.attributes['lastStockPrice'] * self.attributes['lastStockAmount']}. Continue?`;
                 self.emit(':ask', buyString, buyString);
             });
         });
@@ -379,32 +405,34 @@ const handlers = {
 
             const results = bodyJson.ResultSet.Result;
             if (!results.length || error) {
-                const errorMessage = `Could not find a symbol match for ${stockName}, try rephrasing or ask for another company?`;
-                console.log(errorMessage);
+                const errorMessage = `Could not find a symbol match for ${stockName}.` + REPHRASE_PROMPT;
+                console.log(error, errorMessage);
                 setState(self.event, states.MAINSTATE);
-                self.emit(':tellWithCard', errorMessage, SKILL_NAME, imageObj)
+                self.emit(':tellWithCard', errorMessage, SKILL_NAME, imageObj);
+                return;
             }
 
             const mostLikelyStock = results[0];
             const symbol = mostLikelyStock.symbol;
-            const stockName = mostLikelyStock.name;
-            console.log(`parsed most likely stockName/symbol: ${stockName}/${symbol}`);
+            const likelyStock = mostLikelyStock.name;
+            console.log(`parsed most likely stockName/symbol: ${likelyStock}/${symbol}`);
 
             yahoo.quote({
                 symbol: [symbol],
                 modules: ['price'] // see the docs for the full list
             }, function (err, quotes) {
                 if (err) {
-                    self.emit(':tellWithCard', err, SKILL_NAME, imageObj)
+                    self.emit(':tellWithCard', err, SKILL_NAME, imageObj);
+                    return;
                 }
 
-                self.attributes['lastStockName'] = stockName;
+                self.attributes['lastStockName'] = likelyStock;
                 self.attributes['lastStockSymbol'] = symbol;
                 self.attributes['lastStockPrice'] = quotes.price.regularMarketPrice;
                 self.attributes['lastStockAmount'] = amount;
 
                 setState(self.event, states.SELLSTATE);
-                const sellString = `Selling ${self.attributes['lastStockAmount']} ${stockName} would yield $${self.attributes['lastStockPrice'] * self.attributes['lastStockAmount']}. Continue?`;
+                const sellString = `Selling ${self.attributes['lastStockAmount']} ${likelyStock} would yield $${self.attributes['lastStockPrice'] * self.attributes['lastStockAmount']}. Continue?`;
                 self.emit(':ask', sellString, sellString);
             });
         });
@@ -443,8 +471,8 @@ const handlers = {
         const self = this;
         console.log('session ended!');
         const userId = portfolio.getUserFromEvent(self.event);
-        if (stateMap.hasOwnProperty(userId)) {
-            delete stateMap[userId];
+        if (conversationStateMap.hasOwnProperty(userId)) {
+            delete conversationStateMap[userId];
         }
     },
 };

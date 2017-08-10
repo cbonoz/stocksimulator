@@ -4,6 +4,9 @@ QuoteIntent {Stock} price
 QuoteIntent {Stock} quote
 QuoteIntent the current {Stock} price
 QuoteIntent the current {Stock} share price
+QuoteIntent give me the current {Stock} share price
+QuoteIntent give me a quote for {Stock}
+QuoteIntent give me an {Stock} quote
 
 BuyIntent buy {Amount} of {Stock}
 SellIntent sell {Amount} of {Stock}
