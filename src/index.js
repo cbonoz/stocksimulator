@@ -36,23 +36,29 @@ let conversationStateMap = {};
 //=========================================================================================================================================
 
 const states = {
-    MAINSTATE: 'M',
+    MAINSTATE: '',
     BUYSTATE: 'B',
     SELLSTATE: 'S',
     RESTARTSTATE: 'R'
 };
 
-function setState(event, state) {
+function setState(self, state) {
+    const event = self.event;
     const userId = portfolio.getUserFromEvent(event);
-    conversationStateMap[userId] = state;
+    self.attributes['lastState'] = state;
     console.log('setState:', userId, ' in state ', state);
 }
 
-function getState(event) {
+function getState(self) {
+    const event = self.event;
     const userId = portfolio.getUserFromEvent(event);
-    const state = conversationStateMap.hasOwnProperty(userId) ? conversationStateMap[userId] : states.MAINSTATE;
+    const state = self.attributes['lastState'];
     console.log('getState:', userId, state);
     return state;
+}
+
+function roundTwo(val) {
+    return Math.round(val * 100) / 100;
 }
 
 const handlers = {
@@ -60,7 +66,7 @@ const handlers = {
         const self = this;
         console.log("UNHANDLED");
         let message = "";
-        switch (getState(self.event)) {
+        switch (getState(self)) {
             case states.BUYSTATE:
                 message = "Say yes to buy or no to cancel";
                 break;
@@ -75,12 +81,12 @@ const handlers = {
                 break;
         }
         message = "Sorry I didn't get that. " + message;
-        this.emit(':ask', message, message);
+        self.emit(':ask', message, message);
     },
 
     'AMAZON.YesIntent': function () {
         const self = this;
-        switch (getState(self.event)) {
+        switch (getState(self)) {
             case states.BUYSTATE:
                 self.emit('YesBuyIntent');
                 break;
@@ -98,7 +104,7 @@ const handlers = {
 
     'AMAZON.NoIntent': function () {
         const self = this;
-        switch (getState(self.event)) {
+        switch (getState(self)) {
             case states.BUYSTATE:
                 self.emit('NoBuyIntent');
                 break;
@@ -115,13 +121,13 @@ const handlers = {
     },
     'NoBuyIntent': function () {
         const self = this;
-        setState(self.event, states.MAINSTATE);
+        setState(self, states.MAINSTATE);
         const noMessage = 'Cancelled sell order - ';
         self.emit(':ask', noMessage + HELP_MESSAGE, HELP_MESSAGE);
     },
     'YesBuyIntent': function () {
         const self = this;
-        setState(self.event, states.MAINSTATE);
+        setState(self, states.MAINSTATE);
 
         const lastStockAmount = self.attributes['lastStockAmount'];
         const lastStockPrice = self.attributes['lastStockPrice'];
@@ -129,16 +135,17 @@ const handlers = {
         const lastStockName = self.attributes['lastStockName'];
         self.attributes = {};
 
-        const requestUrl = api.getPortfolio(portfolio.getUserFromEvent(this.event));
+        const requestUrl = api.getPortfolio(portfolio.getUserFromEvent(self.event));
         const promise = api.createPromise(requestUrl, "GET");
         promise.then((res) => {
             const myPortfolio = res;
             portfolio.setPortfolio(myPortfolio);
-            const purchaseTotal = lastStockPrice * lastStockAmount;
+            const purchaseTotal = roundTwo(lastStockPrice * lastStockAmount);
 
             // Attempt to update with the buy transaction (returns false if impossible).
             if (!portfolio.updateHolding(lastStockSymbol, lastStockAmount, -purchaseTotal)) {
                 self.emit(":tell", `You need $${purchaseTotal - myPortfolio['Balance']} to complete this purchase`);
+                return;
             }
 
             const requestUrl = api.postPorfolio();
@@ -152,9 +159,9 @@ const handlers = {
             };
             request.post(options, (err, res, body) => {
                 if (err) {
-                    self.emit("Error buying stock: " + err);
+                    self.emit("Internet Error buying stock: " + err);
                 }
-                const remainingCapital = myPortfolio['Balance'] - purchaseTotal;
+                const remainingCapital = roundTwo(myPortfolio['Balance'] - purchaseTotal);
 
                 self.emit(':askWithCard',
                     `Successfully purchased ${lastStockAmount} ${lastStockName} shares, you have $${remainingCapital} remaining. What next?`,
@@ -166,19 +173,19 @@ const handlers = {
             });
         }).catch(function (err) {
             // Portfolio API call failed...
-            self.emit(':tell', "Error getting portfolio: " + err)
+            self.emit(':tell', "Internet Error getting portfolio: " + err)
         });
     },
 
     'NoSellIntent': function () {
         const self = this;
-        setState(self.event, states.MAINSTATE);
+        setState(self, states.MAINSTATE);
         const noMessage = 'Cancelled buy order - ';
         self.emit(':ask', noMessage + HELP_MESSAGE, HELP_MESSAGE);
     },
     'YesSellIntent': function () {
         const self = this;
-        setState(self.event, states.MAINSTATE);
+        setState(self, states.MAINSTATE);
 
         const requestUrl = api.getPortfolio(portfolio.getUserFromEvent(self.event));
         const promise = api.createPromise(requestUrl, "GET");
@@ -193,11 +200,12 @@ const handlers = {
             portfolio.setPortfolio(res);
             const stockMap = portfolio.getStockMap();
 
-            const saleTotal = lastStockPrice * lastStockAmount;
+            const saleTotal = roundTwo(lastStockPrice * lastStockAmount);
 
             // Update with the sell transaction.
             if (!portfolio.updateHolding(lastStockSymbol, -lastStockAmount, saleTotal)) {
                 const currentShares = stockMap.hasOwnProperty(lastStockSymbol) ? stockMap[lastStockSymbol] : 0;
+                setState(self, "");
                 self.emit(":tell", `You don't have enough shares of ${lastStockName} to sell - you asked to sell ` +
                     `${lastStockAmount}, but currently have ${currentShares}.`);
             }
@@ -213,7 +221,7 @@ const handlers = {
             };
             request.post(options, (err, res, body) => {
                 if (err) {
-                    self.emit(":tell", "Error selling stock: " + err);
+                    self.emit(":tell", "Internet Error selling stock: " + err);
                 }
 
                 self.emit(':askWithCard',
@@ -226,35 +234,35 @@ const handlers = {
             });
         }).catch(function (err) {
             // Portfolio API call failed...
-            self.emit(':tell', "Error getting portfolio: " + err)
+            self.emit(':tell', "Internet Error getting portfolio: " + err)
         });
     },
     'NoRestartIntent': function () {
         const self = this;
-        setState(self.event, states.MAINSTATE);
+        setState(self, states.MAINSTATE);
         const noMessage = 'Reset canceled, what do you want to do now?';
         self.emit(':ask', noMessage, HELP_MESSAGE);
     },
     'YesRestartIntent': function () {
         const self = this;
-        setState(self.event, states.MAINSTATE);
+        setState(self, states.MAINSTATE);
         const requestUrl = api.getStartOver(portfolio.getUserFromEvent(self.event));
         const promise = api.createPromise(requestUrl, "GET");
         promise.then((res) => {
             console.log(res);
             self.emit(':ask', `Successfully reset account and balance. What now?`, HELP_MESSAGE);
         }).catch((err) => {
-            self.emit(':tell', "Error resetting account balance: " + err);
+            self.emit(':tell', "Internet Error resetting account balance: " + err);
         })
     },
     'LaunchRequest': function () {
         const self = this;
-        setState(self.event, states.MAINSTATE);
+        setState(self, states.MAINSTATE);
         self.emit('PortfolioIntent');
     },
     'QuoteIntent': function () {
         const self = this;
-        setState(self.event, states.MAINSTATE);
+        setState(self, states.MAINSTATE);
         const quoteStockName = self.event.request.intent.slots.Stock.value;
         request(stock.getClosestSymbolUrl(quoteStockName), function (error, response, body) {
             const bodyJson = JSON.parse(body);
@@ -263,6 +271,7 @@ const handlers = {
             if (!results.length || error) {
                 const errorMessage = `Could not find a symbol match for ${quoteStockName}.` + REPHRASE_PROMPT;
                 console.log(errorMessage);
+                setState(self, "");
                 self.emit(':tellWithCard', errorMessage, SKILL_NAME, imageObj);
                 return;
             }
@@ -277,12 +286,12 @@ const handlers = {
                 modules: ['price'] // see the docs for the full list
             }, function (err, res) {
                 if (err) {
-                    self.emit(':tell', "Web error retrieving stock information, " + err);
+                    self.emit(':tell', "Internet error retrieving stock information, " + err);
                 }
 
                 // current price from the quote response.
                 const sharePrice = res.price.regularMarketPrice;
-                const regularMarketChange = Math.round(res.price.regularMarketChange * 100) / 100;
+                const regularMarketChange = roundTwo(res.price.regularMarketChange);
                 const message = `The last market price for ${likelyStockName}, symbol ${symbol}, was $${sharePrice}, with a recent change of $${regularMarketChange}`;
 
                 self.emit(':tellWithCard', message, SKILL_NAME, imageObj)
@@ -291,8 +300,8 @@ const handlers = {
     },
     'PortfolioIntent': function () {
         const self = this;
-        setState(self.event, states.MAINSTATE);
-        const requestUrl = api.getPortfolio(portfolio.getUserFromEvent(this.event));
+        setState(self, "");
+        const requestUrl = api.getPortfolio(portfolio.getUserFromEvent(self.event));
         const promise = api.createPromise(requestUrl, "GET");
         promise.then((res) => {
             portfolio.setPortfolio(res);
@@ -305,7 +314,9 @@ const handlers = {
 
                 // Gather and resolve promises simultaneously.
                 const promises = symbols.map((symbol) => {
-                    return Promise.resolve(yahoo.quote(symbol, ['price']));
+                    return Promise.resolve(yahoo.quote(symbol, ['price']).catch((err) => {
+                        console.log('error getting quote for ', symbol, err);
+                    }));
                 });
 
                 const res = yield promises;
@@ -318,6 +329,9 @@ const handlers = {
                 let stockValue = 0;
                 for (let i in res) {
                     // current price from the quote response.
+                    if (res === undefined || !res[i].hasOwnProperty('price')) {
+                        continue;
+                    }
                     const quote = res[i];
                     const price = quote.price.regularMarketPrice;
 
@@ -332,7 +346,9 @@ const handlers = {
                 } else {
                     let stockArr = [];
                     Object.keys(stockMap).map((symb) => {
-                        stockArr.push(`${stockMap[symb]} ${stock.getNameFromSymbol(symb)} shares`)
+                        if (stockMap[symb] > 0) {
+                            stockArr.push(`${stockMap[symb]} ${stock.getNameFromSymbol(symb)} shares`)
+                        }
                     });
 
                     const stockString = stockArr.join(", ");
@@ -343,7 +359,7 @@ const handlers = {
             });
         }).catch(function (err) {
             // Portfolio API call failed...
-            self.emit(':tell', "Error getting portfolio: " + err)
+            self.emit(':tell', "Internet Error getting portfolio: " + err)
         });
     },
 
@@ -361,7 +377,7 @@ const handlers = {
             if (!results.length || error) {
                 const errorMessage = `Could not find a symbol match for ${stockName}.` + REPHRASE_PROMPT;
                 console.log(error, errorMessage);
-                setState(self.event, states.MAINSTATE);
+                setState(self, "");
                 self.emit(':askWithCard',
                     errorMessage,
                     REPHRASE_PROMPT,
@@ -380,7 +396,7 @@ const handlers = {
                 modules: ['price'] // see the docs for the full list
             }, function (err, quotes) {
                 if (err) {
-                    self.emit(':tellWithCard', err, SKILL_NAME, imageObj);
+                    self.emit(':tellWithCard', "Internet error, " + err, SKILL_NAME, imageObj);
                     return;
                 }
 
@@ -389,16 +405,18 @@ const handlers = {
                 self.attributes['lastStockPrice'] = quotes.price.regularMarketPrice;
                 self.attributes['lastStockAmount'] = amount;
 
-                setState(self.event, states.BUYSTATE);
-                const buyString = `Buying ${self.attributes['lastStockAmount']} ${likelyStockName} will cost $${self.attributes['lastStockPrice'] * self.attributes['lastStockAmount']}. Continue?`;
+                const buyCost = roundTwo(self.attributes['lastStockPrice'] * self.attributes['lastStockAmount']);
+
+                setState(self, states.BUYSTATE);
+                const buyString = `Buying ${self.attributes['lastStockAmount']} ${likelyStockName} will cost $${buyCost}. Continue?`;
                 self.emit(':ask', buyString, buyString);
             });
         });
     },
     'SellIntent': function () {
         const self = this;
-        const amount = parseInt(this.event.request.intent.slots.Amount.value);
-        const stockName = this.event.request.intent.slots.Stock.value;
+        const amount = parseInt(self.event.request.intent.slots.Amount.value);
+        const stockName = self.event.request.intent.slots.Stock.value;
 
         request(stock.getClosestSymbolUrl(stockName), function (error, response, body) {
             const bodyJson = JSON.parse(body);
@@ -407,7 +425,7 @@ const handlers = {
             if (!results.length || error) {
                 const errorMessage = `Could not find a symbol match for ${stockName}.` + REPHRASE_PROMPT;
                 console.log(error, errorMessage);
-                setState(self.event, states.MAINSTATE);
+                setState(self, states.MAINSTATE);
                 self.emit(':tellWithCard', errorMessage, SKILL_NAME, imageObj);
                 return;
             }
@@ -431,8 +449,10 @@ const handlers = {
                 self.attributes['lastStockPrice'] = quotes.price.regularMarketPrice;
                 self.attributes['lastStockAmount'] = amount;
 
-                setState(self.event, states.SELLSTATE);
-                const sellString = `Selling ${self.attributes['lastStockAmount']} ${likelyStock} would yield $${self.attributes['lastStockPrice'] * self.attributes['lastStockAmount']}. Continue?`;
+                const sellCost = roundTwo(self.attributes['lastStockPrice'] * self.attributes['lastStockAmount']);
+
+                setState(self, states.SELLSTATE);
+                const sellString = `Selling ${self.attributes['lastStockAmount']} ${likelyStock} would yield $${sellCost}. Continue?`;
                 self.emit(':ask', sellString, sellString);
             });
         });
@@ -440,7 +460,7 @@ const handlers = {
 
     'RestartIntent': function () {
         const self = this;
-        setState(self.event, states.RESTARTSTATE);
+        setState(self, states.RESTARTSTATE);
         const resetMessage = `Did you want to reset your account? This will set your balance back to ${stock.STARTING_BALANCE}. ${CONFIRM_MESSAGE}`;
         self.emit(':ask', resetMessage, resetMessage);
     },
@@ -454,17 +474,17 @@ const handlers = {
 
     'AMAZON.HelpIntent': function () {
         const self = this;
-        setState(self.event, states.MAINSTATE);
+        setState(self, states.MAINSTATE);
         self.emit(':ask', HELP_MESSAGE, HELP_MESSAGE);
     },
     'AMAZON.CancelIntent': function () {
         const self = this;
-        setState(self.event, states.MAINSTATE);
+        setState(self, states.MAINSTATE);
         self.emit(':tell', STOP_MESSAGE);
     },
     'AMAZON.StopIntent': function () {
         const self = this;
-        setState(self.event, states.MAINSTATE);
+        setState(self, states.MAINSTATE);
         self.emit(':tell', STOP_MESSAGE);
     },
     'SessionEndedRequest': function () {

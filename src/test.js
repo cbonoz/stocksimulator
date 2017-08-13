@@ -111,85 +111,88 @@ const self = this;
 
 let event = {session: {user: {userId: null}}};
 event['session']['user']['userId'] = "chris_test";
-const requestUrl = api.getPortfolio(portfolio.getUserFromEvent(event));
-const promise = api.createPromise(requestUrl, "GET");
-promise.then((res) => {
-    portfolio.setPortfolio(res);
-
-    const stockMap = portfolio.getStockMap();
-    const symbols = Object.keys(stockMap);
-    console.log('symbols: '+ symbols);
-
-    // This replaces the deprecated snapshot() API
-
-    co(function *() {
-
-        const promises = symbols.map((symbol) => {
-            return Promise.resolve(yahoo.quote(symbol, ['price']));
-        });
-
-        const res = yield promises;
-        console.log(res);
-
-        const stockMap = portfolio.getStockMap();
-        const balance = portfolio.getPortfolio()['Balance'];
-        console.log('stockMap: ' + JSON.stringify(stockMap));
-
-        let stockValue = 0;
-        for (let i in res) {
-            // current price from the quote response.
-            const quote = res[i];
-            const price = quote.price.regularMarketPrice;
-
-            console.log(quote.price.shortName, price);
-            stockValue += stockMap[symbols[i]] * price
-        }
-        // Check if new account
-        let message = "";
-        if (stockValue === 0 && balance === stock.STARTING_BALANCE) {
-            message = stock.newPortfolioMessage(balance);
-        } else {
-            message = stock.portfolioMessage(stockMap, stockValue, balance);
-        }
-        console.log('portfolio message: ', message);
-
-
-    }).catch((err) => {
-        console.log(err);
-        console.log(':tell', "error retrieving quote information, " + err);
-    });
-
-});
-
-//
 // const requestUrl = api.getPortfolio(portfolio.getUserFromEvent(event));
 // const promise = api.createPromise(requestUrl, "GET");
 // promise.then((res) => {
-//     const myPortfolio = res;
-//     portfolio.setPortfolio(myPortfolio);
-//     const purchaseTotal = lastStockAmount * lastStockPrice;
+//     portfolio.setPortfolio(res);
 //
-//     // Attempt to update with the buy transaction (returns false if impossible).
-//     if (!portfolio.updateHolding(lastStock, lastStockAmount, -purchaseTotal)) {
-//         console.log(":tell", `You don't have sufficient capital, you currently only have $${myPortfolio['Balance']}`);
-//         return;
-//     }
+//     const stockMap = portfolio.getStockMap();
+//     const symbols = Object.keys(stockMap);
+//     console.log('symbols: '+ symbols);
 //
-//     const requestUrl = api.postPorfolio();
-//     let p = portfolio.getPortfolio();
-//     const reqBody = JSON.stringify(p);
-//     console.log('url: ' + requestUrl);
-//     console.log('body: ' + reqBody);
-//     request.post({url: requestUrl, form: reqBody}, (err, res, body) => {
-//         if (err) {
-//             console.log("Error buying stock: " + err);
+//     // This replaces the deprecated snapshot() API
+//
+//     co(function *() {
+//
+//         const promises = symbols.map((symbol) => {
+//             return Promise.resolve(yahoo.quote(symbol, ['price']));
+//         });
+//
+//         const res = yield promises;
+//         console.log(res);
+//
+//         const stockMap = portfolio.getStockMap();
+//         const balance = portfolio.getPortfolio()['Balance'];
+//         console.log('stockMap: ' + JSON.stringify(stockMap));
+//
+//         let stockValue = 0;
+//         for (let i in res) {
+//             // current price from the quote response.
+//             const quote = res[i];
+//             const price = quote.price.regularMarketPrice;
+//
+//             console.log(quote.price.shortName, price);
+//             stockValue += stockMap[symbols[i]] * price
 //         }
-//         console.log("response: " + JSON.stringify(res));
+//         // Check if new account
+//         let message = "";
+//         if (stockValue === 0 && balance === stock.STARTING_BALANCE) {
+//             message = stock.newPortfolioMessage(balance);
+//         } else {
+//             message = stock.portfolioMessage(stockMap, stockValue, balance);
+//         }
+//         console.log('portfolio message: ', message);
 //
-//         console.log(':ask', `Successfully purchased ${lastStockAmount} ${lastStock} shares. What now?`);
 //
+//     }).catch((err) => {
+//         console.log(err);
+//         console.log(':tell', "error retrieving quote information, " + err);
 //     });
-// }).catch(function (err) {
-//     // Portfolio API call failed...
-//     console.log(':tell', "Error getting portfolio: " + err)
+//
 // });
+//
+
+lastStock = "CVNA";
+lastStockPrice = 10;
+
+const requestUrl = api.getPortfolio(portfolio.getUserFromEvent(event));
+const promise = api.createPromise(requestUrl, "GET");
+promise.then((res) => {
+    const myPortfolio = res;
+    portfolio.setPortfolio(myPortfolio);
+    const purchaseTotal = lastStockAmount * lastStockPrice;
+
+    // Attempt to update with the buy transaction (returns false if impossible).
+    if (!portfolio.updateHolding(lastStock, lastStockAmount, -purchaseTotal)) {
+        console.log(":tell", `You don't have sufficient capital, you currently only have $${myPortfolio['Balance']}`);
+        return;
+    }
+
+    const requestUrl = api.postPorfolio();
+    let p = portfolio.getPortfolio();
+    const reqBody = JSON.stringify(p);
+    console.log('url: ' + requestUrl);
+    console.log('body: ' + reqBody);
+    request.post({url: requestUrl, form: reqBody}, (err, res, body) => {
+        if (err) {
+            console.log("Error buying stock: " + err);
+        }
+        console.log("response: " + JSON.stringify(res));
+
+        console.log(':ask', `Successfully purchased ${lastStockAmount} ${lastStock} shares. What now?`);
+
+    });
+}).catch(function (err) {
+    // Portfolio API call failed...
+    console.log(':tell', "Error getting portfolio: " + err)
+});

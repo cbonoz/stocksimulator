@@ -8,10 +8,15 @@ QuoteIntent give me the current {Stock} share price
 QuoteIntent give me a quote for {Stock}
 QuoteIntent give me an {Stock} quote
 
+BuyIntent buy {Amount} {Stock}
 BuyIntent buy {Amount} of {Stock}
-SellIntent sell {Amount} of {Stock}
 BuyIntent buy {Amount} shares of {Stock}
+BuyIntent buy {Amount} share of {Stock}
+
+SellIntent sell {Amount} {Stock}
+SellIntent sell {Amount} of {Stock}
 SellIntent sell {Amount} shares of {Stock}
+SellIntent sell {Amount} share of {Stock}
 
 PortfolioIntent my account balance
 PortfolioIntent my account information
@@ -19,6 +24,9 @@ PortfolioIntent my portfolio
 PortfolioIntent my portfolio information
 PortfolioIntent my portfolio value
 PortfolioIntent my stocks
+PortfolioIntent my holdings
+PortfolioIntent my account
+PortfolioIntent my account
 
 RestartIntent start over
 RestartIntent new portfolio

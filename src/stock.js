@@ -27,7 +27,7 @@ const library = (function () {
         const totalValue = stockValue + cashValue;
 
         return `Hello, here is your portfolio: You own ${stockString}, alongside $${cashValue} in capital - ` +
-            `for a total account value of $${totalValue} .`;
+            `totaling $${totalValue} .`;
     }
 
     function newPortfolioMessage(cashValue) {
