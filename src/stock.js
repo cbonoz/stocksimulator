@@ -2,14 +2,14 @@
 const library = (function () {
 
     const appName = 'Stock Simulator';
-    const welcomeText = "Welcome to " + appName + ". I am a verbal simulator for stock trading.";
-    const actionText = "You can say something like 'buy 100 shares of AMAZON', or 'sell 100 shares of TESLA'.";
-    const helpText = "You can ask 'my portfolio', or " + actionText;
-    const exitText = 'Closed ' + appName + ".";
+    const welcomeText = "Welcome to " + appName + ". I am a verbal simulator for stock trading. ";
+    const actionText = "You can say something like 'buy 100 shares of AMAZON', or 'sell 100 shares of TESLA'. ";
+    const helpText = "You can ask 'my portfolio', or " + actionText + ". ";
+    const exitText = 'Closed ' + appName + ". ";
     const noResultsText = "Could not find any results for: ";
     const authErrorText = "There was an authentication issue while retrieving your information, please reinstall " +
-        "or re-authenticate the alexa app";
-    const askAgainText = "Ask me something else?";
+        "or re-authenticate the alexa app. ";
+    const askAgainText = "Ask me something else? ";
     const serverErrorText = "Could not retrieve information from server. " + askAgainText;
     const startingBalance = 100000;
 

@@ -202,7 +202,7 @@ const sellHandlers = Alexa.CreateStateHandler(states.RESTARTMODE, {
 const handlers = {
     'Unhandled': function () {
         console.log("UNHANDLED");
-        const message = "Sorry I didn't get that. " + HELP_MESSAGE;
+        const message = `${REPEAT_PROMPT} ${HELP_MESSAGE}`;
         this.emit(':ask', message, message);
     },
     'LaunchRequest': function () {
