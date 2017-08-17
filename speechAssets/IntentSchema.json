@@ -3,22 +3,6 @@
     {
       "intent": "LaunchRequest"
     },
-     {
-      "intent": "SessionEndedIntent"
-    },
-    {
-      "intent": "NoRestartIntent"
-    }, {
-      "intent": "YesRestartIntent"
-    }, {
-      "intent": "NoBuyIntent"
-    }, {
-      "intent": "YesBuyIntent"
-    }, {
-      "intent": "NoSellIntent"
-    }, {
-      "intent": "YesSellIntent"
-    },
     {
       "intent": "QuoteIntent",
       "slots": [
@@ -32,12 +16,12 @@
       "intent": "BuyIntent",
       "slots": [
         {
-          "name": "Stock",
-          "type": "STOCK"
-        },
-        {
           "name": "Amount",
           "type": "AMAZON.NUMBER"
+        },
+        {
+          "name": "Stock",
+          "type": "STOCK"
         }
       ]
     },
@@ -45,12 +29,12 @@
       "intent": "SellIntent",
       "slots": [
         {
-          "name": "Stock",
-          "type": "STOCK"
-        },
-        {
           "name": "Amount",
           "type": "AMAZON.NUMBER"
+        },
+        {
+          "name": "Stock",
+          "type": "STOCK"
         }
       ]
     },
