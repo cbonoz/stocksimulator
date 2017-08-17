@@ -23,6 +23,7 @@ const HELP_MESSAGE = stock.HELP_TEXT;
 const STOP_MESSAGE = stock.EXIT_TEXT;
 const CONFIRM_MESSAGE = 'Are you sure? Say yes or no.';
 const REPHRASE_PROMPT = 'Try rephrasing or ask for another company.';
+const REPEAT_PROMPT = "Sorry I didn't get that. ";
 
 const imageObj = {
     smallImageUrl: './img/stock_sim_108.png',
@@ -36,104 +37,49 @@ let conversationStateMap = {};
 //=========================================================================================================================================
 
 const states = {
-    MAINSTATE: '',
-    BUYSTATE: 'B',
-    SELLSTATE: 'S',
-    RESTARTSTATE: 'R'
+    BUYMODE: '_BUYMODE',
+    SELLMODE: '_SELLMODE',
+    RESTARTMODE: '_RESTARTMODE'
 };
-
-function setState(self, state) {
-    const event = self.event;
-    const userId = portfolio.getUserFromEvent(event);
-    self.attributes['lastState'] = state;
-    console.log('setState:', userId, ' in state ', state);
-}
-
-function getState(self) {
-    const event = self.event;
-    const userId = portfolio.getUserFromEvent(event);
-    const state = self.attributes['lastState'];
-    console.log('getState:', userId, state);
-    return state;
-}
 
 function roundTwo(val) {
     return Math.round(val * 100) / 100;
 }
 
-const handlers = {
-    'Unhandled': function () {
-        const self = this;
-        console.log("UNHANDLED");
-        let message = "";
-        switch (getState(self)) {
-            case states.BUYSTATE:
-                message = "Say yes to buy or no to cancel";
-                break;
-            case states.SELLSTATE:
-                message = "Say yes to sell or no to cancel";
-                break;
-            case states.RESTARTSTATE:
-                message = "Say yes to restart your account or no to cancel";
-                break;
-            default: // MAINSTATE
-                message = HELP_MESSAGE;
-                break;
-        }
-        message = "Sorry I didn't get that. " + message;
-        self.emit(':ask', message, message);
-    },
-
+const restartHandlers = Alexa.CreateStateHandler(states.RESTARTMODE, {
     'AMAZON.YesIntent': function () {
         const self = this;
-        switch (getState(self)) {
-            case states.BUYSTATE:
-                self.emit('YesBuyIntent');
-                break;
-            case states.SELLSTATE:
-                self.emit('YesSellIntent');
-                break;
-            case states.RESTARTSTATE:
-                self.emit('YesRestartIntent');
-                break;
-            default: // MAINSTATE
-                self.emit('AMAZON.HelpIntent');
-                break;
-        }
+        self.handler.state = '';
+        const requestUrl = api.getStartOver(portfolio.getUserFromEvent(self.event));
+        const promise = api.createPromise(requestUrl, "GET");
+        promise.then((res) => {
+            console.log(res);
+            self.emitWithState(':ask', `Successfully reset account and balance. What now?`, HELP_MESSAGE);
+        }).catch((err) => {
+            self.emit(':tell', "Internet Error resetting account balance: " + err);
+        })
     },
-
     'AMAZON.NoIntent': function () {
         const self = this;
-        switch (getState(self)) {
-            case states.BUYSTATE:
-                self.emit('NoBuyIntent');
-                break;
-            case states.SELLSTATE:
-                self.emit('NoSellIntent');
-                break;
-            case states.RESTARTSTATE:
-                self.emit('NoRestartIntent');
-                break;
-            default: // MAINSTATE
-                self.emit('AMAZON.HelpIntent');
-                break;
-        }
+        self.handler.state = '';
+        const noMessage = 'Reset canceled, what do you want to do now?';
+        self.emitWithState(':ask', noMessage, HELP_MESSAGE);
     },
-    'NoBuyIntent': function () {
+    'Unhandled': function () {
+        const message = `${REPEAT_PROMPT} Say yes to restart your account or no to cancel.`;
+        this.emit(':ask', message, message);
+    }
+});
+
+const buyHandlers = Alexa.CreateStateHandler(states.RESTARTMODE, {
+    'AMAZON.YesIntent': function () {
         const self = this;
-        setState(self, states.MAINSTATE);
-        const noMessage = 'Cancelled sell order - ';
-        self.emit(':ask', noMessage + HELP_MESSAGE, HELP_MESSAGE);
-    },
-    'YesBuyIntent': function () {
-        const self = this;
-        setState(self, states.MAINSTATE);
+        self.handler.state = '';
 
         const lastStockAmount = self.attributes['lastStockAmount'];
         const lastStockPrice = self.attributes['lastStockPrice'];
         const lastStockSymbol = self.attributes['lastStockSymbol'];
         const lastStockName = self.attributes['lastStockName'];
-        self.attributes = {};
 
         const requestUrl = api.getPortfolio(portfolio.getUserFromEvent(self.event));
         const promise = api.createPromise(requestUrl, "GET");
@@ -159,11 +105,10 @@ const handlers = {
             };
             request.post(options, (err, res, body) => {
                 if (err) {
-                    self.emit("Internet Error buying stock: " + err);
+                    self.emit(":tell", "Internet Error buying stock: " + err);
                 }
                 const remainingCapital = roundTwo(myPortfolio['Balance'] - purchaseTotal);
-
-                self.emit(':askWithCard',
+                self.emitWithState(':askWithCard',
                     `Successfully purchased ${lastStockAmount} ${lastStockName} shares, you have $${remainingCapital} remaining. What next?`,
                     HELP_MESSAGE,
                     SKILL_NAME,
@@ -176,17 +121,22 @@ const handlers = {
             self.emit(':tell', "Internet Error getting portfolio: " + err)
         });
     },
-
-    'NoSellIntent': function () {
+    'AMAZON.NoIntent': function () {
         const self = this;
-        setState(self, states.MAINSTATE);
+        self.handler.state = '';
         const noMessage = 'Cancelled buy order - ';
-        self.emit(':ask', noMessage + HELP_MESSAGE, HELP_MESSAGE);
+        self.emitWithState(':ask', noMessage + HELP_MESSAGE, HELP_MESSAGE);
     },
-    'YesSellIntent': function () {
-        const self = this;
-        setState(self, states.MAINSTATE);
+    'Unhandled': function () {
+        const message = `${REPEAT_PROMPT} Say yes to restart your account or no to cancel.`;
+        this.emit(':ask', message, message);
+    }
+});
 
+const sellHandlers = Alexa.CreateStateHandler(states.RESTARTMODE, {
+    'AMAZON.YesIntent': function () {
+        const self = this;
+        self.handler.state = '';
         const requestUrl = api.getPortfolio(portfolio.getUserFromEvent(self.event));
         const promise = api.createPromise(requestUrl, "GET");
 
@@ -194,7 +144,6 @@ const handlers = {
         const lastStockPrice = self.attributes['lastStockPrice'];
         const lastStockSymbol = self.attributes['lastStockSymbol'];
         const lastStockName = self.attributes['lastStockName'];
-        self.attributes = {};
 
         promise.then((res) => {
             portfolio.setPortfolio(res);
@@ -205,7 +154,6 @@ const handlers = {
             // Update with the sell transaction.
             if (!portfolio.updateHolding(lastStockSymbol, -lastStockAmount, saleTotal)) {
                 const currentShares = stockMap.hasOwnProperty(lastStockSymbol) ? stockMap[lastStockSymbol] : 0;
-                setState(self, "");
                 self.emit(":tell", `You don't have enough shares of ${lastStockName} to sell - you asked to sell ` +
                     `${lastStockAmount}, but currently have ${currentShares}.`);
             }
@@ -224,7 +172,7 @@ const handlers = {
                     self.emit(":tell", "Internet Error selling stock: " + err);
                 }
 
-                self.emit(':askWithCard',
+                self.emitWithState(':askWithCard',
                     `Successfully sold ${lastStockAmount} ${lastStockName} shares for $${saleTotal}. What next?`,
                     HELP_MESSAGE,
                     SKILL_NAME,
@@ -237,32 +185,32 @@ const handlers = {
             self.emit(':tell', "Internet Error getting portfolio: " + err)
         });
     },
-    'NoRestartIntent': function () {
+
+    'AMAZON.NoIntent': function () {
         const self = this;
-        setState(self, states.MAINSTATE);
-        const noMessage = 'Reset canceled, what do you want to do now?';
-        self.emit(':ask', noMessage, HELP_MESSAGE);
+        self.handler.state = '';
+        const noMessage = 'Cancelled sell order - ';
+        self.emitWithState(':ask', noMessage + HELP_MESSAGE, HELP_MESSAGE);
     },
-    'YesRestartIntent': function () {
-        const self = this;
-        setState(self, states.MAINSTATE);
-        const requestUrl = api.getStartOver(portfolio.getUserFromEvent(self.event));
-        const promise = api.createPromise(requestUrl, "GET");
-        promise.then((res) => {
-            console.log(res);
-            self.emit(':ask', `Successfully reset account and balance. What now?`, HELP_MESSAGE);
-        }).catch((err) => {
-            self.emit(':tell', "Internet Error resetting account balance: " + err);
-        })
+    'Unhandled': function () {
+        const message = `${REPEAT_PROMPT} Say yes to restart your account or no to cancel.`;
+        this.emit(':ask', message, message);
+    }
+});
+
+// Base level (main state) handlers).
+const handlers = {
+    'Unhandled': function () {
+        console.log("UNHANDLED");
+        const message = "Sorry I didn't get that. " + HELP_MESSAGE;
+        this.emit(':ask', message, message);
     },
     'LaunchRequest': function () {
         const self = this;
-        setState(self, states.MAINSTATE);
         self.emit('PortfolioIntent');
     },
     'QuoteIntent': function () {
         const self = this;
-        setState(self, states.MAINSTATE);
         const quoteStockName = self.event.request.intent.slots.Stock.value;
         request(stock.getClosestSymbolUrl(quoteStockName), function (error, response, body) {
             const bodyJson = JSON.parse(body);
@@ -271,7 +219,6 @@ const handlers = {
             if (!results.length || error) {
                 const errorMessage = `Could not find a symbol match for ${quoteStockName}.` + REPHRASE_PROMPT;
                 console.log(errorMessage);
-                setState(self, "");
                 self.emit(':tellWithCard', errorMessage, SKILL_NAME, imageObj);
                 return;
             }
@@ -300,7 +247,6 @@ const handlers = {
     },
     'PortfolioIntent': function () {
         const self = this;
-        setState(self, "");
         const requestUrl = api.getPortfolio(portfolio.getUserFromEvent(self.event));
         const promise = api.createPromise(requestUrl, "GET");
         promise.then((res) => {
@@ -363,8 +309,7 @@ const handlers = {
         });
     },
 
-    // Two phase intents below:
-
+    // ** TWO PHASE INTENTS BELOW ** //
     'BuyIntent': function () {
         const self = this;
         const amount = parseInt(self.event.request.intent.slots.Amount.value);
@@ -377,7 +322,6 @@ const handlers = {
             if (!results.length || error) {
                 const errorMessage = `Could not find a symbol match for ${stockName}.` + REPHRASE_PROMPT;
                 console.log(error, errorMessage);
-                setState(self, "");
                 self.emit(':askWithCard',
                     errorMessage,
                     REPHRASE_PROMPT,
@@ -407,9 +351,9 @@ const handlers = {
 
                 const buyCost = roundTwo(self.attributes['lastStockPrice'] * self.attributes['lastStockAmount']);
 
-                setState(self, states.BUYSTATE);
+                self.handler.state = states.BUYMODE;
                 const buyString = `Buying ${self.attributes['lastStockAmount']} ${likelyStockName} will cost $${buyCost}. Continue?`;
-                self.emit(':ask', buyString, buyString);
+                self.emitWithState(':ask', buyString, buyString);
             });
         });
     },
@@ -425,7 +369,6 @@ const handlers = {
             if (!results.length || error) {
                 const errorMessage = `Could not find a symbol match for ${stockName}.` + REPHRASE_PROMPT;
                 console.log(error, errorMessage);
-                setState(self, states.MAINSTATE);
                 self.emit(':tellWithCard', errorMessage, SKILL_NAME, imageObj);
                 return;
             }
@@ -451,18 +394,18 @@ const handlers = {
 
                 const sellCost = roundTwo(self.attributes['lastStockPrice'] * self.attributes['lastStockAmount']);
 
-                setState(self, states.SELLSTATE);
+                self.handler.state = states.SELLMODE;
                 const sellString = `Selling ${self.attributes['lastStockAmount']} ${likelyStock} would yield $${sellCost}. Continue?`;
-                self.emit(':ask', sellString, sellString);
+                self.emitWithState(':ask', sellString, sellString);
             });
         });
     },
 
     'RestartIntent': function () {
         const self = this;
-        setState(self, states.RESTARTSTATE);
+        self.handler.state = states.RESTARTMODE;
         const resetMessage = `Did you want to reset your account? This will set your balance back to ${stock.STARTING_BALANCE}. ${CONFIRM_MESSAGE}`;
-        self.emit(':ask', resetMessage, resetMessage);
+        self.emitWithState(':ask', resetMessage, resetMessage);
     },
 
     // ** AMAZON INTENTS BELOW ** //
@@ -474,34 +417,23 @@ const handlers = {
 
     'AMAZON.HelpIntent': function () {
         const self = this;
-        setState(self, states.MAINSTATE);
         self.emit(':ask', HELP_MESSAGE, HELP_MESSAGE);
     },
     'AMAZON.CancelIntent': function () {
         const self = this;
-        setState(self, states.MAINSTATE);
         self.emit(':tell', STOP_MESSAGE);
     },
     'AMAZON.StopIntent': function () {
         const self = this;
-        setState(self, states.MAINSTATE);
         self.emit(':tell', STOP_MESSAGE);
-    },
-    'SessionEndedRequest': function () {
-        const self = this;
-        console.log('session ended!');
-        const userId = portfolio.getUserFromEvent(self.event);
-        if (conversationStateMap.hasOwnProperty(userId)) {
-            delete conversationStateMap[userId];
-        }
-    },
+    }
 };
 
 exports.handler = function (event, context, callback) {
     const alexa = Alexa.handler(event, context);
     alexa.APP_ID = APP_ID;
     alexa.appId = APP_ID;
-    alexa.registerHandlers(handlers); // , sellHandlers, buyHandlers, restartHandlers);
+    alexa.registerHandlers(handlers, sellHandlers, buyHandlers, restartHandlers);
     // alexa.dynamoDBTableName = 'StockSimulator'; // table not needed for tracking session attributes.
     alexa.execute();
 };
