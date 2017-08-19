@@ -2,8 +2,22 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="8072a01f-725f-43a7-a992-b596d964ae57" name="Default" comment="">
+      <change type="DELETED" beforePath="$PROJECT_DIR$/LICENSE.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/lambda-role.md" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/set-up-aws.md" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/step-by-step/1-voice-user-interface.md" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/step-by-step/2-lambda-function.md" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/step-by-step/3-connect-vui-to-code.md" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/step-by-step/4-testing.md" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/step-by-step/5-customization.md" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/step-by-step/6-publication.md" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/unit-testing.md" afterPath="" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/src/img/stock_sim_108.png" afterPath="$PROJECT_DIR$/data/img/stock_sim_108.png" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/src/img/stock_sim_512.png" afterPath="$PROJECT_DIR$/data/img/stock_sim_512.png" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/index.js" afterPath="$PROJECT_DIR$/src/index.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/package-lock.json" afterPath="$PROJECT_DIR$/src/package-lock.json" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/stock.js" afterPath="$PROJECT_DIR$/src/stock.js" />
     </list>
     <ignored path="$PROJECT_DIR$/.tmp/" />
     <ignored path="$PROJECT_DIR$/temp/" />
@@ -21,8 +35,8 @@
       <file leaf-file-name="SampleUtterances_en_US.txt" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/speechAssets/SampleUtterances_en_US.txt">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="360">
-              <caret line="24" column="34" lean-forward="false" selection-start-line="24" selection-start-column="34" selection-end-line="24" selection-end-column="34" />
+            <state relative-caret-position="270">
+              <caret line="24" column="34" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="33" selection-end-column="21" />
               <folding />
             </state>
           </provider>
@@ -31,8 +45,8 @@
       <file leaf-file-name="index.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/index.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="4923">
-              <caret line="437" column="37" lean-forward="false" selection-start-line="437" selection-start-column="37" selection-end-line="437" selection-end-column="37" />
+            <state relative-caret-position="225">
+              <caret line="188" column="26" lean-forward="false" selection-start-line="188" selection-start-column="26" selection-end-line="188" selection-end-column="26" />
               <folding />
             </state>
           </provider>
@@ -53,16 +67,6 @@
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="165">
               <caret line="11" column="0" lean-forward="false" selection-start-line="11" selection-start-column="0" selection-end-line="11" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="package-lock.json" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/package-lock.json">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -101,9 +105,12 @@
       <file leaf-file-name="stock.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/stock.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="420">
-              <caret line="28" column="21" lean-forward="false" selection-start-line="28" selection-start-column="21" selection-end-line="28" selection-end-column="21" />
-              <folding />
+            <state relative-caret-position="600">
+              <caret line="129" column="16" lean-forward="false" selection-start-line="129" selection-start-column="16" selection-end-line="129" selection-end-column="16" />
+              <folding>
+                <marker date="1503169069000" expanded="true" signature="43:4850" ph="{...}" />
+                <marker date="1503169069000" expanded="true" signature="1666:4850" ph="{&quot;DDD&quot;: '3D Systems Corporation'...}" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -111,8 +118,8 @@
       <file leaf-file-name="IntentSchema.json" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/speechAssets/IntentSchema.json">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="105">
-              <caret line="7" column="5" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="81" selection-end-column="1" />
+            <state relative-caret-position="195">
+              <caret line="13" column="5" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="65" selection-end-column="1" />
               <folding />
             </state>
           </provider>
@@ -129,18 +136,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>getState(self.event</find>
-      <find>getState(self.even</find>
-      <find>getState(</find>
-      <find>getState</find>
-      <find>getState\</find>
-      <find>getState\(</find>
-      <find>getState\(sel</find>
-      <find>getState\(self.event</find>
-      <find>setState\(self.event</find>
-      <find>Selling</find>
-      <find>setStat(self, states.MAINMODE)</find>
-      <find>setState(self, states.MAINMODE)</find>
       <find>setState\(self, states.MAINMODE)</find>
       <find>setState\(self, states.MAINMODE\)</find>
       <find>setState(self, &quot;&quot;)</find>
@@ -159,6 +154,18 @@
       <find>emit(</find>
       <find>setState</find>
       <find>session</find>
+      <find>Sorry</find>
+      <find>'WEC': 'WEC Energy Group, Inc.',</find>
+      <find>^</find>
+      <find>BUYMODE</find>
+      <find>sellString</find>
+      <find>buyString</find>
+      <find>Cancelled</find>
+      <find>NoIntent</find>
+      <find>Unhandled</find>
+      <find>Cancelled uy</find>
+      <find>reset</find>
+      <find>{}</find>
     </findStrings>
     <replaceStrings>
       <replace />
@@ -184,14 +191,14 @@
         <option value="$PROJECT_DIR$/src/symbol.js" />
         <option value="$PROJECT_DIR$/test.py" />
         <option value="$PROJECT_DIR$/src/api.js" />
-        <option value="$PROJECT_DIR$/speechAssets/IntentSchema.json" />
         <option value="$PROJECT_DIR$/src/portfolio.js" />
         <option value="$PROJECT_DIR$/README.md" />
         <option value="$PROJECT_DIR$/data/stocks.py" />
         <option value="$PROJECT_DIR$/src/package.json" />
         <option value="$PROJECT_DIR$/src/test.js" />
-        <option value="$PROJECT_DIR$/src/stock.js" />
         <option value="$PROJECT_DIR$/speechAssets/SampleUtterances_en_US.txt" />
+        <option value="$PROJECT_DIR$/speechAssets/IntentSchema.json" />
+        <option value="$PROJECT_DIR$/src/stock.js" />
         <option value="$PROJECT_DIR$/src/index.js" />
       </list>
     </option>
@@ -234,6 +241,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scratches" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -270,24 +278,6 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="img" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="stock-simulator" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="stock-simulator" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
               <option name="myItemId" value="speechAssets" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
@@ -306,10 +296,27 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="stock-simulator" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="stock-simulator" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="data" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="img" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
         </subPane>
       </pane>
       <pane id="Scope" />
-      <pane id="Scratches" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -325,13 +332,13 @@
     <property name="HbShouldOpenHtmlAsHb" value="" />
   </component>
   <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/data" />
+    </key>
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/data" />
       <recent name="$PROJECT_DIR$/src" />
       <recent name="$PROJECT_DIR$/src/img" />
-    </key>
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/data" />
     </key>
   </component>
   <component name="RunDashboard">
@@ -463,6 +470,9 @@
   <component name="ShelveChangesManager" show_recycled="false">
     <option name="remove_strategy" value="false" />
   </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
       <changelist id="8072a01f-725f-43a7-a992-b596d964ae57" name="Default" comment="" />
@@ -486,12 +496,13 @@
       <workItem from="1502329035802" duration="5797000" />
       <workItem from="1502635401419" duration="2500000" />
       <workItem from="1502638164520" duration="15000" />
-      <workItem from="1502940567292" duration="1122000" />
+      <workItem from="1502940567292" duration="1998000" />
+      <workItem from="1503156609968" duration="5018000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="61123000" />
+    <option name="totallyTimeSpent" value="67017000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="23" width="1440" height="873" extended-state="6" />
@@ -504,7 +515,7 @@
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32834226" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32834226" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.24960506" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.34039736" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.30728477" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.45695364" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
@@ -583,7 +594,10 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="285">
           <caret line="19" column="36" lean-forward="false" selection-start-line="19" selection-start-column="36" selection-end-line="19" selection-end-column="36" />
-          <folding />
+          <folding>
+            <marker date="1503169069000" expanded="true" signature="43:4850" ph="{...}" />
+            <marker date="1503169069000" expanded="true" signature="1666:4850" ph="{&quot;DDD&quot;: '3D Systems Corporation'...}" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -635,7 +649,10 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="285">
           <caret line="19" column="36" lean-forward="false" selection-start-line="19" selection-start-column="36" selection-end-line="19" selection-end-column="36" />
-          <folding />
+          <folding>
+            <marker date="1503169069000" expanded="true" signature="43:4850" ph="{...}" />
+            <marker date="1503169069000" expanded="true" signature="1666:4850" ph="{&quot;DDD&quot;: '3D Systems Corporation'...}" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -677,7 +694,10 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="180">
           <caret line="12" column="26" lean-forward="false" selection-start-line="12" selection-start-column="26" selection-end-line="12" selection-end-column="26" />
-          <folding />
+          <folding>
+            <marker date="1503169069000" expanded="true" signature="43:4850" ph="{...}" />
+            <marker date="1503169069000" expanded="true" signature="1666:4850" ph="{&quot;DDD&quot;: '3D Systems Corporation'...}" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -719,7 +739,10 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="180">
           <caret line="12" column="26" lean-forward="false" selection-start-line="12" selection-start-column="26" selection-end-line="12" selection-end-column="26" />
-          <folding />
+          <folding>
+            <marker date="1503169069000" expanded="true" signature="43:4850" ph="{...}" />
+            <marker date="1503169069000" expanded="true" signature="1666:4850" ph="{&quot;DDD&quot;: '3D Systems Corporation'...}" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -761,7 +784,10 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="435">
           <caret line="29" column="23" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="37" selection-end-column="25" />
-          <folding />
+          <folding>
+            <marker date="1503169069000" expanded="true" signature="43:4850" ph="{...}" />
+            <marker date="1503169069000" expanded="true" signature="1666:4850" ph="{&quot;DDD&quot;: '3D Systems Corporation'...}" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -791,12 +817,12 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/speechAssets/SampleUtterances_de_DE.txt" />
-    <entry file="file://$PROJECT_DIR$/src/img/stock_sim_512.png">
+    <entry file="file://$PROJECT_DIR$/data/img/stock_sim_512.png">
       <provider selected="true" editor-type-id="images">
         <state />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/img/stock_sim_108.png">
+    <entry file="file://$PROJECT_DIR$/data/img/stock_sim_108.png">
       <provider selected="true" editor-type-id="images">
         <state />
       </provider>
@@ -854,34 +880,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/data/stocks.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="165">
-          <caret line="11" column="0" lean-forward="false" selection-start-line="11" selection-start-column="0" selection-end-line="11" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/package-lock.json">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/speechAssets/IntentSchema.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="105">
-          <caret line="7" column="5" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="81" selection-end-column="1" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/test.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2475">
-          <caret line="165" column="0" lean-forward="false" selection-start-line="165" selection-start-column="0" selection-end-line="165" selection-end-column="0" />
           <folding />
         </state>
       </provider>
@@ -894,26 +896,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/speechAssets/SampleUtterances_en_US.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="360">
-          <caret line="24" column="34" lean-forward="false" selection-start-line="24" selection-start-column="34" selection-end-line="24" selection-end-column="34" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/portfolio.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1065">
           <caret line="71" column="8" lean-forward="false" selection-start-line="71" selection-start-column="8" selection-end-line="71" selection-end-column="8" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/stock.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="420">
-          <caret line="28" column="21" lean-forward="false" selection-start-line="28" selection-start-column="21" selection-end-line="28" selection-end-column="21" />
           <folding />
         </state>
       </provider>
@@ -926,10 +912,53 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/test.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2475">
+          <caret line="165" column="0" lean-forward="false" selection-start-line="165" selection-start-column="0" selection-end-line="165" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/data/stocks.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="165">
+          <caret line="11" column="0" lean-forward="false" selection-start-line="11" selection-start-column="0" selection-end-line="11" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/stock.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="600">
+          <caret line="129" column="16" lean-forward="false" selection-start-line="129" selection-start-column="16" selection-end-line="129" selection-end-column="16" />
+          <folding>
+            <marker date="1503169069000" expanded="true" signature="43:4850" ph="{...}" />
+            <marker date="1503169069000" expanded="true" signature="1666:4850" ph="{&quot;DDD&quot;: '3D Systems Corporation'...}" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/speechAssets/SampleUtterances_en_US.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="270">
+          <caret line="24" column="34" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="33" selection-end-column="21" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/speechAssets/IntentSchema.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="195">
+          <caret line="13" column="5" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="65" selection-end-column="1" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/index.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="4923">
-          <caret line="437" column="37" lean-forward="false" selection-start-line="437" selection-start-column="37" selection-end-line="437" selection-end-column="37" />
+        <state relative-caret-position="225">
+          <caret line="188" column="26" lean-forward="false" selection-start-line="188" selection-start-column="26" selection-end-line="188" selection-end-column="26" />
           <folding />
         </state>
       </provider>

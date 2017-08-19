@@ -30,8 +30,6 @@ const imageObj = {
     largeImageUrl: './img/stock_sim_512.png',
 };
 
-let conversationStateMap = {};
-
 //=========================================================================================================================================
 // Skill logic below
 //=========================================================================================================================================
@@ -54,7 +52,7 @@ const restartHandlers = Alexa.CreateStateHandler(states.RESTARTMODE, {
         const promise = api.createPromise(requestUrl, "GET");
         promise.then((res) => {
             console.log(res);
-            self.emitWithState(':ask', `Successfully reset account and balance. What now?`, HELP_MESSAGE);
+            self.emit(':ask', `Successfully reset account and balance. What now?`, HELP_MESSAGE);
         }).catch((err) => {
             self.emit(':tell', "Internet Error resetting account balance: " + err);
         })
@@ -63,7 +61,7 @@ const restartHandlers = Alexa.CreateStateHandler(states.RESTARTMODE, {
         const self = this;
         self.handler.state = '';
         const noMessage = 'Reset canceled, what do you want to do now?';
-        self.emitWithState(':ask', noMessage, HELP_MESSAGE);
+        self.emit(':ask', noMessage, HELP_MESSAGE);
     },
     'Unhandled': function () {
         const message = `${REPEAT_PROMPT} Say yes to restart your account or no to cancel.`;
@@ -71,7 +69,7 @@ const restartHandlers = Alexa.CreateStateHandler(states.RESTARTMODE, {
     }
 });
 
-const buyHandlers = Alexa.CreateStateHandler(states.RESTARTMODE, {
+const buyHandlers = Alexa.CreateStateHandler(states.BUYMODE, {
     'AMAZON.YesIntent': function () {
         const self = this;
         self.handler.state = '';
@@ -108,7 +106,7 @@ const buyHandlers = Alexa.CreateStateHandler(states.RESTARTMODE, {
                     self.emit(":tell", "Internet Error buying stock: " + err);
                 }
                 const remainingCapital = roundTwo(myPortfolio['Balance'] - purchaseTotal);
-                self.emitWithState(':askWithCard',
+                self.emit(':askWithCard',
                     `Successfully purchased ${lastStockAmount} ${lastStockName} shares, you have $${remainingCapital} remaining. What next?`,
                     HELP_MESSAGE,
                     SKILL_NAME,
@@ -124,16 +122,16 @@ const buyHandlers = Alexa.CreateStateHandler(states.RESTARTMODE, {
     'AMAZON.NoIntent': function () {
         const self = this;
         self.handler.state = '';
-        const noMessage = 'Cancelled buy order - ';
-        self.emitWithState(':ask', noMessage + HELP_MESSAGE, HELP_MESSAGE);
+        const noMessage = 'Cancelled buy order. ';
+        self.emit(':tell', noMessage);
     },
     'Unhandled': function () {
-        const message = `${REPEAT_PROMPT} Say yes to restart your account or no to cancel.`;
+        const message = `${REPEAT_PROMPT} Say yes to complete the buy order or no to cancel.`;
         this.emit(':ask', message, message);
     }
 });
 
-const sellHandlers = Alexa.CreateStateHandler(states.RESTARTMODE, {
+const sellHandlers = Alexa.CreateStateHandler(states.SELLMODE, {
     'AMAZON.YesIntent': function () {
         const self = this;
         self.handler.state = '';
@@ -172,7 +170,7 @@ const sellHandlers = Alexa.CreateStateHandler(states.RESTARTMODE, {
                     self.emit(":tell", "Internet Error selling stock: " + err);
                 }
 
-                self.emitWithState(':askWithCard',
+                self.emit(':askWithCard',
                     `Successfully sold ${lastStockAmount} ${lastStockName} shares for $${saleTotal}. What next?`,
                     HELP_MESSAGE,
                     SKILL_NAME,
@@ -189,11 +187,11 @@ const sellHandlers = Alexa.CreateStateHandler(states.RESTARTMODE, {
     'AMAZON.NoIntent': function () {
         const self = this;
         self.handler.state = '';
-        const noMessage = 'Cancelled sell order - ';
-        self.emitWithState(':ask', noMessage + HELP_MESSAGE, HELP_MESSAGE);
+        const noMessage = 'Cancelled sell order. ';
+        self.emit(':tell', noMessage);
     },
     'Unhandled': function () {
-        const message = `${REPEAT_PROMPT} Say yes to restart your account or no to cancel.`;
+        const message = `${REPEAT_PROMPT} Say yes to complete the sell order or no to cancel.`;
         this.emit(':ask', message, message);
     }
 });
@@ -353,7 +351,8 @@ const handlers = {
 
                 self.handler.state = states.BUYMODE;
                 const buyString = `Buying ${self.attributes['lastStockAmount']} ${likelyStockName} will cost $${buyCost}. Continue?`;
-                self.emitWithState(':ask', buyString, buyString);
+                console.log('buyString: ', buyString);
+                self.emit(':ask', buyString, buyString);
             });
         });
     },
@@ -396,7 +395,8 @@ const handlers = {
 
                 self.handler.state = states.SELLMODE;
                 const sellString = `Selling ${self.attributes['lastStockAmount']} ${likelyStock} would yield $${sellCost}. Continue?`;
-                self.emitWithState(':ask', sellString, sellString);
+                console.log('sellString: ', sellString);
+                self.emit(':ask', sellString, sellString);
             });
         });
     },
@@ -405,7 +405,7 @@ const handlers = {
         const self = this;
         self.handler.state = states.RESTARTMODE;
         const resetMessage = `Did you want to reset your account? This will set your balance back to ${stock.STARTING_BALANCE}. ${CONFIRM_MESSAGE}`;
-        self.emitWithState(':ask', resetMessage, resetMessage);
+        self.emit(':ask', resetMessage, resetMessage);
     },
 
     // ** AMAZON INTENTS BELOW ** //
