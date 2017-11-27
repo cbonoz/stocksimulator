@@ -3,9 +3,19 @@
  */
 'use strict';
 const library = (function () {
+    const crypto = require('crypto');
 
     let userId = null;
     let portfolio = {};
+
+    function getUserHash(data) {
+        return crypto.createHash('md5').update(data).digest('hex');
+    }
+
+    function getUserFromEvent(event) {
+        const userId = event.session.user.userId;
+        return getUserHash(userId);
+    }
 
     function getStockMap() {
         return JSON.parse(portfolio['StockMap']);
@@ -56,13 +66,6 @@ const library = (function () {
     function getUser() {
         return userId;
     }
-
-    function getUserFromEvent(event) {
-        const userId = event.session.user.userId;
-        const startIndex = Math.max(userId.length - 20, 0);
-        return userId.substr(startIndex);
-    }
-
     return {
         updateHolding: updateHolding,
         setUser: setUser,

@@ -12,7 +12,7 @@ const stockName = 'amzn';
 const amount = 100;
 
 
-// request(stock.getClosestSymbolUrl(stockName), function (error, response, body) {
+// request(api.getClosestSymbolUrl(stockName), function (error, response, body) {
 //     console.log('error:', error); // Print the error if one occurred
 //     console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
 //     console.log('body:', body); // Print the HTML for the Google homepage.
@@ -42,7 +42,7 @@ const amount = 100;
 //     });
 // });
 
-// request(stock.getClosestSymbolUrl(stockName), function (error, response, body) {
+// request(api.getClosestSymbolUrl(stockName), function (error, response, body) {
 //     const bodyJson = JSON.parse(body);
 //
 //     const results = bodyJson.ResultSet.Result;
@@ -72,7 +72,7 @@ const amount = 100;
 // });
 
 // BUY
-// request(stock.getClosestSymbolUrl(stockName), function (error, response, body) {
+// request(api.getClosestSymbolUrl(stockName), function (error, response, body) {
 //     const bodyJson = JSON.parse(body);
 //
 //     const results = bodyJson.ResultSet.Result;

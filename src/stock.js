@@ -13,10 +13,6 @@ const library = (function () {
     const serverErrorText = "Could not retrieve information from server. " + askAgainText;
     const startingBalance = 100000;
 
-    function getClosestSymbolUrl(stockName) {
-        return `http://d.yimg.com/aq/autoc?query=${stockName}&region=US&lang=en-US`;
-    }
-
     function balanceMessage(balance) {
         return `You currently have ${balance} available, what would you like to do?`;
     }

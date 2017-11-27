@@ -3,49 +3,40 @@
  */
 'use strict';
 const library = (function () {
-    const rp = require('request-promise');
+    const axios = require('axios');
 
     // point to server url.
-    const baseUrl = "http://35.167.54.81:9003/api";
+    const BASE_URL = "https://35.167.54.81:9003/ss";
+
+    function getClosestSymbolUrl(stockName) {
+        return axios.get(`http://d.yimg.com/aq/autoc?query=${stockName}&region=US&lang=en-US`);
+    }
 
     function getPortfolio(userId) {
-        return `${baseUrl}/portfolio/${userId}`;
+        return axios.get(`${BASE_URL}/portfolio/${userId}`);
     }
 
-    function postPortfolio() {
-        return `${baseUrl}/portfolio/save`;
+    function getRestart(userId) {
+        return axios.get(`${BASE_URL}/restart/${userId}`);
     }
 
-    function getStartOver(userId) {
-        return `${baseUrl}/restart/${userId}`;
+    function postPortfolio(userId, portfolio) {
+        return axios.post(`${BASE_URL}/portfolio/save`, {
+            userId: userId,
+            portfolio: portfolio
+        });
     }
 
-    /*
-     * url: request url
-     * method: "GET", "POST", etc.
-     * token: auth token retrieved from toast usermgmt
-     * restaurantGuid: rsGuid retrieved from toast usermgmt
-     */
-    function createPromise(url, method, body) {
-        const options = {
-            method: method,
-            uri: url,
-            headers: {
-            },
-            json: true // Automatically parses the JSON string in the response
-        };
-        if (body !== undefined) {
-            options['json'] = body;
-        }
-        console.log('options: ' + JSON.stringify(options));
-        return rp(options);
+    function getErrorMessage(again) {
+        return `Internet error ${action}, please try again`;
     }
 
     return {
+        getClosestSymbolUrl: getClosestSymbolUrl,
+        getErrorMessage: getErrorMessage,
         getPortfolio: getPortfolio,
-        getStartOver: getStartOver,
-        postPorfolio: postPortfolio,
-        createPromise: createPromise,
+        getRestart: getRestart,
+        postPorfolio: postPortfolio
     };
 
 })();

@@ -1,7 +1,6 @@
 'use strict';
 const Alexa = require('alexa-sdk');
 const yahoo = require('yahoo-finance');
-const request = require('request');
 const co = require('co');
 
 // local libraries.
@@ -48,13 +47,13 @@ const restartHandlers = Alexa.CreateStateHandler(states.RESTARTMODE, {
     'AMAZON.YesIntent': function () {
         const self = this;
         self.handler.state = '';
-        const requestUrl = api.getStartOver(portfolio.getUserFromEvent(self.event));
-        const promise = api.createPromise(requestUrl, "GET");
+        const userId = portfolio.getUserFromEvent(self.event);
+        const promise = api.getRestart(userId);
         promise.then((res) => {
             console.log(res);
             self.emit(':ask', `Successfully reset account and balance. What now?`, HELP_MESSAGE);
         }).catch((err) => {
-            self.emit(':tell', "Internet Error resetting account balance: " + err);
+            self.emit(':tell', api.getErrorMessage("resetting account balance"));
         })
     },
     'AMAZON.NoIntent': function () {
@@ -79,8 +78,9 @@ const buyHandlers = Alexa.CreateStateHandler(states.BUYMODE, {
         const lastStockSymbol = self.attributes['lastStockSymbol'];
         const lastStockName = self.attributes['lastStockName'];
 
-        const requestUrl = api.getPortfolio(portfolio.getUserFromEvent(self.event));
-        const promise = api.createPromise(requestUrl, "GET");
+        const user = portfolio.getUserFromEvent(self.event);
+
+        const promise = api.getPortfolio();
         promise.then((res) => {
             const myPortfolio = res;
             portfolio.setPortfolio(myPortfolio);
@@ -92,19 +92,8 @@ const buyHandlers = Alexa.CreateStateHandler(states.BUYMODE, {
                 return;
             }
 
-            const requestUrl = api.postPorfolio();
-            const options = {
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                url: requestUrl,
-                body: JSON.stringify(portfolio.getPortfolio()),
-                json: true
-            };
-            request.post(options, (err, res, body) => {
-                if (err) {
-                    self.emit(":tell", "Internet Error buying stock: " + err);
-                }
+            const promise = api.postPorfolio(user, JSON.stringify(portfolio.getPortfolio()));
+            promise.then((res) => {
                 const remainingCapital = roundTwo(myPortfolio['Balance'] - purchaseTotal);
                 self.emit(':askWithCard',
                     `Successfully purchased ${lastStockAmount} ${lastStockName} shares, you have $${remainingCapital} remaining. What next?`,
@@ -112,11 +101,15 @@ const buyHandlers = Alexa.CreateStateHandler(states.BUYMODE, {
                     SKILL_NAME,
                     imageObj
                 );
-
-            });
+            }).catch((err) => {
+                const error = "Internet Error buying stock: " + err;
+                console.log(error)
+                self.emit(":tell", api.getErrorMessage("buying stock"));
+            })
         }).catch(function (err) {
-            // Portfolio API call failed...
-            self.emit(':tell', "Internet Error getting portfolio: " + err)
+            const error = "Internet Error getting portfolio: " + err;
+            console.error(error)
+            self.emit(':tell', api.getErrorMessage("getting portfolio"));
         });
     },
     'AMAZON.NoIntent': function () {
@@ -135,8 +128,8 @@ const sellHandlers = Alexa.CreateStateHandler(states.SELLMODE, {
     'AMAZON.YesIntent': function () {
         const self = this;
         self.handler.state = '';
-        const requestUrl = api.getPortfolio(portfolio.getUserFromEvent(self.event));
-        const promise = api.createPromise(requestUrl, "GET");
+        const userId = portfolio.getUserFromEvent(self.event);
+        const promise = api.getPortfolio(userId);
 
         const lastStockAmount = self.attributes['lastStockAmount'];
         const lastStockPrice = self.attributes['lastStockPrice'];
@@ -156,18 +149,10 @@ const sellHandlers = Alexa.CreateStateHandler(states.SELLMODE, {
                     `${lastStockAmount}, but currently have ${currentShares}.`);
             }
 
-            const requestUrl = api.postPorfolio();
-            const options = {
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                url: requestUrl,
-                body: JSON.stringify(portfolio.getPortfolio()),
-                json: true
-            };
-            request.post(options, (err, res, body) => {
+            const promise = api.postPorfolio(userId, JSON.stringify(portfolio.getPortfolio()));
+            promise.post(options, (err, res, body) => {
                 if (err) {
-                    self.emit(":tell", "Internet Error selling stock: " + err);
+                    self.emit(":tell", api.getErrorMessage("selling stock"));
                 }
 
                 self.emit(':askWithCard',
@@ -180,7 +165,7 @@ const sellHandlers = Alexa.CreateStateHandler(states.SELLMODE, {
             });
         }).catch(function (err) {
             // Portfolio API call failed...
-            self.emit(':tell', "Internet Error getting portfolio: " + err)
+            self.emit(':tell', api.getErrorMessage("getting portfolio"));
         });
     },
 
@@ -210,11 +195,11 @@ const handlers = {
     'QuoteIntent': function () {
         const self = this;
         const quoteStockName = self.event.request.intent.slots.Stock.value;
-        request(stock.getClosestSymbolUrl(quoteStockName), function (error, response, body) {
+        api.getClosestSymbolUrl(quoteStockName).then((body) => {
             const bodyJson = JSON.parse(body);
 
             const results = bodyJson.ResultSet.Result;
-            if (!results.length || error) {
+            if (!results.length) {
                 const errorMessage = `Could not find a symbol match for ${quoteStockName}.` + REPHRASE_PROMPT;
                 console.log(errorMessage);
                 self.emit(':tellWithCard', errorMessage, SKILL_NAME, imageObj);
@@ -231,7 +216,7 @@ const handlers = {
                 modules: ['price'] // see the docs for the full list
             }, function (err, res) {
                 if (err) {
-                    self.emit(':tell', "Internet error retrieving stock information, " + err);
+                    self.emit(':tell', api.getErrorMessage("getting stock information"));
                 }
 
                 // current price from the quote response.
@@ -245,8 +230,8 @@ const handlers = {
     },
     'PortfolioIntent': function () {
         const self = this;
-        const requestUrl = api.getPortfolio(portfolio.getUserFromEvent(self.event));
-        const promise = api.createPromise(requestUrl, "GET");
+        const userId = portfolio.getUserFromEvent(self.event)
+        const promise = api.getPortfolio(userId);
         promise.then((res) => {
             portfolio.setPortfolio(res);
 
@@ -303,7 +288,7 @@ const handlers = {
             });
         }).catch(function (err) {
             // Portfolio API call failed...
-            self.emit(':tell', "Internet Error getting portfolio: " + err)
+            self.emit(':tell', api.getErrorMessage("getting portfolio"));
         });
     },
 
@@ -313,11 +298,11 @@ const handlers = {
         const amount = parseInt(self.event.request.intent.slots.Amount.value);
         const stockName = self.event.request.intent.slots.Stock.value;
 
-        request(stock.getClosestSymbolUrl(stockName), function (error, response, body) {
+        api.getClosestSymbolUrl(stockName).then((body) => {
             const bodyJson = JSON.parse(body);
 
             const results = bodyJson.ResultSet.Result;
-            if (!results.length || error) {
+            if (!results.length) {
                 const errorMessage = `Could not find a symbol match for ${stockName}.` + REPHRASE_PROMPT;
                 console.log(error, errorMessage);
                 self.emit(':askWithCard',
@@ -338,7 +323,7 @@ const handlers = {
                 modules: ['price'] // see the docs for the full list
             }, function (err, quotes) {
                 if (err) {
-                    self.emit(':tellWithCard', "Internet error, " + err, SKILL_NAME, imageObj);
+                    self.emit(':tellWithCard', api.getErrorMessage("getting stock quote"), SKILL_NAME, imageObj);
                     return;
                 }
 
@@ -361,11 +346,11 @@ const handlers = {
         const amount = parseInt(self.event.request.intent.slots.Amount.value);
         const stockName = self.event.request.intent.slots.Stock.value;
 
-        request(stock.getClosestSymbolUrl(stockName), function (error, response, body) {
+        api.getClosestSymbolUrl(stockName).then((body) => {
             const bodyJson = JSON.parse(body);
 
             const results = bodyJson.ResultSet.Result;
-            if (!results.length || error) {
+            if (!results.length) {
                 const errorMessage = `Could not find a symbol match for ${stockName}.` + REPHRASE_PROMPT;
                 console.log(error, errorMessage);
                 self.emit(':tellWithCard', errorMessage, SKILL_NAME, imageObj);
@@ -414,7 +399,6 @@ const handlers = {
         const self = this;
         self.emit("RestartIntent")
     },
-
     'AMAZON.HelpIntent': function () {
         const self = this;
         self.emit(':ask', HELP_MESSAGE, HELP_MESSAGE);
